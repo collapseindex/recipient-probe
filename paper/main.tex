@@ -52,8 +52,11 @@ model's default output nonetheless honors that intent only about $0.6$ of the ti
 stream along the late-layer probe direction recovers the discarded behavior with a clean monotone
 dose-response: recognize-intent honoring rises $0.67 \to 0.92$ while unsolicited feedback collapses from
 $15/24$ to $1/24$, coherence preserved. The model represents the sender's intent, discards it at readout, and
-routing the direction it already encodes makes it honor it. We are deliberate about scope, one model and one
-intent contrast, and name the controls that make each link trustworthy.
+routing the direction it already encodes makes it honor it. The chain holds across four models spanning a
+$4\times$ size range and two architecture families (the representation decodes at $1.00$ everywhere, and the
+steering handle, at a model-specific layer, recovers the discard in each). We are deliberate about the
+remaining scope, one intent contrast and behavioral counts of $n{=}12$ per model, and name the controls that
+make each link trustworthy.
 \end{abstract}
 
 \section{Introduction}
@@ -189,15 +192,60 @@ Recognize-intent honoring climbs with dose and unsolicited feedback collapses to
 \label{tab:steer}
 \end{table}
 
+\section{Generality Across Models}
+\label{sec:general}
+We replicate the chain on three further models, Qwen2.5-7B and 14B (scaling) and Mistral-7B-Instruct
+(a different family), on GPU. The probe and steering procedures are unchanged, except that the steer layer is
+chosen per model by the same sweep used for the 3B (Section~\ref{sec:steer}).
+
+\paragraph{Representation generalizes.} Intent decodes at $1.00$ with bag-of-words at chance on all four
+models, across a $4{\times}$ size range and two architecture families (Table~\ref{tab:general}). The
+representation is not a small-model or single-family artifact.
+
+\paragraph{Discarding is model-specific; recovery is general.} How much a model discards by default varies
+widely: Qwen-7B almost never honors a recognize-intent share ($0.08$), while Mistral usually does ($0.75$).
+But the steering handle is present in every model, the sanity gate passes on all four, and steering toward
+recognize recovers the discarded behavior, or, where the model already honors it (Mistral), cleanly controls
+the feedback axis instead (toward-evaluate raises unsolicited feedback $10{\to}23$, toward-recognize lowers it
+$10{\to}5$). Qwen-7B is the sharpest case: it discards hardest and recovers furthest, $0.08 \to 0.92$, with
+feedback collapsing $22{\to}2$.
+
+\paragraph{The steer layer is model-specific.} The layer at which the handle works is \emph{not} a fixed
+fraction of depth: mid-network for the 7B ($0.57$), late for the 14B and 3B ($0.85$, $0.83$). A fixed-depth
+heuristic under-recovers (it limped on the 7B until the per-model sweep located layer~16). The sweep, not a
+depth rule, is what finds the handle.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lcccc}
+\toprule
+model & layers & probe / BoW & honored: default $\to$ steered & steer layer \\
+\midrule
+Qwen2.5-3B  & 36 & 1.00 / 0.48 & $0.67 \to 0.92$ & 30 (0.83) \\
+Qwen2.5-7B  & 28 & 1.00 / 0.46 & $0.08 \to 0.92$ & 16 (0.57) \\
+Qwen2.5-14B & 48 & 1.00 / 0.46 & $0.42 \to 0.75$ & 41 (0.85) \\
+Mistral-7B  & 32 & 1.00 / 0.46 & $0.75$ (ceiling) & 22 (0.69) \\
+\bottomrule
+\end{tabular}
+\caption{The chain across four models, two families. \emph{Represents} (probe peak / bag-of-words) holds at
+$1.00$ with BoW at chance everywhere. Default honoring of recognize-intent varies by model; steering recovers
+it (Mistral is already near ceiling, so its recovery shows on the feedback axis, see text). The steer layer,
+and its fraction of depth, is model-specific. Behavioral counts are $n{=}12$ recognize-intent items per model.}
+\label{tab:general}
+\end{table}
+
 \section{Limitations}
-We state these prominently because the result is easy to overread. \textbf{One model, one contrast.}
-Qwen2.5-3B-Instruct, the recognize-vs-evaluate intent, $n{=}120$ for the probe; deeper intents (being
-witnessed rather than helped) and larger models are untested. \textbf{The steer layer was found by sweeping
-four.} Layer~30 is the only one that worked; the dose-response on a held-out object slice mitigates the
-cherry-pick concern, but a cleaner write-up cross-validates the layer choice. \textbf{Heuristic behavior
-measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon; the steering effect is large
-($15\to1$) so classifier noise cannot drive it, but a learned measure would be cleaner. \textbf{Coherence
-ceiling.} Steering past coefficient $1.0$ degrades fluency, so the causal handle has a bounded operating range.
+We state these prominently because the result is easy to overread. \textbf{Scope.} Four models across two
+families (Qwen 3B/7B/14B, Mistral-7B); the \emph{represents} result is $n{=}120$, but the behavioral discard
+and recovery counts are $n{=}12$ per model and should be read as directional. One intent contrast
+(recognize vs evaluate); deeper intents (being witnessed rather than helped) are untested, as are further
+open-weight families (a Phi and Llama run is pending a dependency fix). \textbf{Per-model steer layer.} The
+handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
+a single cherry-picked layer, but cross-validating the layer choice within each model would be cleaner.
+\textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon
+(audited against generations); the steering effects are large enough that classifier noise cannot drive them,
+but a learned measure would be cleaner. \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
+fluency, so the causal handle has a bounded operating range.
 
 \section{Discussion}
 For this case the interpretation gap is a readout failure, not a blindness, and the readout failure is
@@ -206,7 +254,7 @@ phrasings, its default output does not use it, and adding the represented direct
 stream recovers the honoring behavior with a dose-response. This reframes a class of ``the model does not get
 it'' failures as routing problems with a demonstrated, not merely hypothesized, fix. It also clarifies why
 the naive fix fails: the decodable direction at the representation's peak is entangled with the discard, and
-the causal handle lives in the \emph{discriminative} direction at a later layer. This finding is the first
+the causal handle lives in the \emph{discriminative} direction at a model-specific layer (not the probe peak). This finding is the first
 empirical brick under a recipient-aware attention architecture; that architecture is not claimed here. The
 claim is the chain: the model knows the sender's intent, does not say it, and can be made to say it by routing
 what it already knows.

@@ -17,3 +17,5 @@ paper/*.pdf
 paper/*.fdb_latexmk
 paper/*.fls
 paper/*.synctex.gz
+
+sweep_*.json
