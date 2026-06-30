@@ -6,14 +6,24 @@ Qwen2.5-3B    36      1.00/0.48    0.67             0.92            PASS  30 (0.
 Qwen2.5-7B    28      1.00/0.46    0.08 (1/12)      0.92 (11/12)    PASS  16 (0.57)
 Qwen2.5-14B   48      1.00/0.46    0.42 (5/12)      0.75 (9/12)     PASS  41 (0.85)
 Mistral-7B    32      1.00/0.46    0.75 (9/12)      ceiling*        PASS  22 (0.69)
+Phi-3.5-mini  32      1.00/0.46    0.58 (7/12)      0.75 (9/12)     PASS  22 (0.69)
+Llama-3.1-8B  32      1.00/0.46    0.50 (6/12)      0.83 (10/12)    PASS  19 (0.59)
 
 * Mistral already honors recognize-intent by default; recovery shows on the feedback axis
   (toward-evaluate raises feedback 10->23, toward-recognize lowers it 10->5).
 
-Reads:
-- REPRESENTS generalizes: intent decodes at 1.00 with BoW at chance on all 4 (2 families, 4x size range).
-- RECOVER generalizes: gate passes on all; Qwen-7B is sharpest (discards hardest 1/12, recovers furthest 11/12).
-- Steer layer is MODEL-SPECIFIC (mid-net for 7B, late for 14B/3B); a fixed-depth heuristic under-recovers.
-- Classifier audited against generations: offers_feedback correctly separates feedback-offer from acknowledgment.
+Gate detail (toward-evaluate eval-behavior vs toward-recognize, a=1.0):
+  Phi-3.5: 21 vs 2   |  Llama-3.1-8B: 21 vs 8   (toward-eval produces feedback, toward-rec suppresses it)
 
-Pending: Phi-3.5 failed on a transformers cache-API dep bug (DynamicCache.from_legacy_cache); Llama gated.
+Reads:
+- REPRESENTS generalizes: intent decodes at 1.00 with BoW at chance on all 6 (4 families, 4x size range).
+- RECOVER generalizes: gate passes on all 6; Qwen-7B is sharpest (discards hardest 1/12, recovers furthest 11/12).
+- Steer layer is MODEL-SPECIFIC (mid-net for 7B/Llama at 0.57/0.59, late for 14B/3B at 0.85/0.83,
+  between for Phi/Mistral at 0.69); a fixed-depth heuristic under-recovers.
+- Classifier audited against generations: offers_feedback (feedback lexicon + "?") separates feedback-offer
+  from acknowledgment; the dose swing holds under the same fixed rule on baseline and both steer directions.
+
+Cross-family closure: Phi-3.5-mini (Microsoft) and Llama-3.1-8B (Meta) now replicate the full chain,
+extending the ladder to 6 models / 4 families. The earlier Phi dependency bug
+(DynamicCache.from_legacy_cache) was fixed by dropping trust_remote_code (native Phi3) + pinning
+transformers==5.12.1.

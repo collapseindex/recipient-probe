@@ -14,11 +14,12 @@ import modal
 
 app = modal.App("recipient-probe-sweep")
 image = (modal.Image.debian_slim(python_version="3.11")
-         .pip_install("torch", "transformers>=4.44", "accelerate", "scikit-learn", "numpy", "sentencepiece"))
+         .pip_install("torch", "transformers==5.12.1", "accelerate", "scikit-learn", "numpy", "sentencepiece"))
 cache = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
-MODELS = ["Qwen/Qwen2.5-7B-Instruct", "Qwen/Qwen2.5-14B-Instruct",
-          "mistralai/Mistral-7B-Instruct-v0.3", "microsoft/Phi-3.5-mini-instruct"]
+# wider ladder: the cross-family models not yet covered. Phi via native transformers (no trust_remote_code,
+# the repo's custom code calls the removed DynamicCache.from_legacy_cache); Llama via an ungated mirror.
+MODELS = ["microsoft/Phi-3.5-mini-instruct", "NousResearch/Meta-Llama-3.1-8B-Instruct"]
 
 R_PHRASES = [
     "I've been chipping away at this for months and I'm a little nervous to show anyone.",
@@ -120,7 +121,7 @@ def run_model(model_name: str):
 
     tok = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.bfloat16,
-                                                 device_map="cuda", trust_remote_code=True).eval()
+                                                 device_map="cuda").eval()
     nL = model.config.num_hidden_layers
     probe_layers = sorted(set(max(1, int(f * nL)) for f in [0.33, 0.5, 0.67, 0.83, 0.92]))
     cand_layers = sorted(set(max(1, int(f * nL)) for f in [0.6, 0.7, 0.78, 0.86, 0.94]))
@@ -221,7 +222,7 @@ def main():
             out.append(run_model.remote(m))
         except Exception:
             out.append({"model": m, "ERROR": traceback.format_exc()})
-    path = r"C:/Users/alexs/Desktop/recipient-probe/sweep_full.json"
+    path = r"C:/Users/alexs/Desktop/recipient-probe/sweep_new.json"
     with open(path, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=1)
     print(f"WROTE {path}")

@@ -52,8 +52,8 @@ model's default output nonetheless honors that intent only about $0.6$ of the ti
 stream along the late-layer probe direction recovers the discarded behavior with a clean monotone
 dose-response: recognize-intent honoring rises $0.67 \to 0.92$ while unsolicited feedback collapses from
 $15/24$ to $1/24$, coherence preserved. The model represents the sender's intent, discards it at readout, and
-routing the direction it already encodes makes it honor it. The chain holds across four models spanning a
-$4\times$ size range and two architecture families (the representation decodes at $1.00$ everywhere, and the
+routing the direction it already encodes makes it honor it. The chain holds across six models spanning a
+$4\times$ size range and four architecture families (the representation decodes at $1.00$ everywhere, and the
 steering handle, at a model-specific layer, recovers the discard in each). We are deliberate about the
 remaining scope, one intent contrast and behavioral counts of $n{=}12$ per model, and name the controls that
 make each link trustworthy.
@@ -194,26 +194,27 @@ Recognize-intent honoring climbs with dose and unsolicited feedback collapses to
 
 \section{Generality Across Models}
 \label{sec:general}
-We replicate the chain on three further models, Qwen2.5-7B and 14B (scaling) and Mistral-7B-Instruct
-(a different family), on GPU. The probe and steering procedures are unchanged, except that the steer layer is
-chosen per model by the same sweep used for the 3B (Section~\ref{sec:steer}).
+We replicate the chain on five further models: Qwen2.5-7B and 14B (scaling), Mistral-7B-Instruct,
+Phi-3.5-mini, and Llama-3.1-8B-Instruct (three further families), on GPU. The probe and steering procedures
+are unchanged, except that the steer layer is chosen per model by the same sweep used for the 3B
+(Section~\ref{sec:steer}).
 
-\paragraph{Representation generalizes.} Intent decodes at $1.00$ with bag-of-words at chance on all four
-models, across a $4{\times}$ size range and two architecture families (Table~\ref{tab:general}). The
-representation is not a small-model or single-family artifact.
+\paragraph{Representation generalizes.} Intent decodes at $1.00$ with bag-of-words at chance on all six
+models, across a $4{\times}$ size range and four architecture families (Qwen, Mistral, Phi, Llama;
+Table~\ref{tab:general}). The representation is not a small-model or single-family artifact.
 
 \paragraph{Discarding is model-specific; recovery is general.} How much a model discards by default varies
 widely: Qwen-7B almost never honors a recognize-intent share ($0.08$), while Mistral usually does ($0.75$).
-But the steering handle is present in every model, the sanity gate passes on all four, and steering toward
+But the steering handle is present in every model, the sanity gate passes on all six, and steering toward
 recognize recovers the discarded behavior, or, where the model already honors it (Mistral), cleanly controls
 the feedback axis instead (toward-evaluate raises unsolicited feedback $10{\to}23$, toward-recognize lowers it
 $10{\to}5$). Qwen-7B is the sharpest case: it discards hardest and recovers furthest, $0.08 \to 0.92$, with
 feedback collapsing $22{\to}2$.
 
 \paragraph{The steer layer is model-specific.} The layer at which the handle works is \emph{not} a fixed
-fraction of depth: mid-network for the 7B ($0.57$), late for the 14B and 3B ($0.85$, $0.83$). A fixed-depth
-heuristic under-recovers (it limped on the 7B until the per-model sweep located layer~16). The sweep, not a
-depth rule, is what finds the handle.
+fraction of depth: mid-network for the 7B and Llama-8B ($0.57$, $0.59$), late for the 14B and 3B ($0.85$,
+$0.83$), and between for Phi and Mistral ($0.69$). A fixed-depth heuristic under-recovers (it limped on the
+7B until the per-model sweep located layer~16). The sweep, not a depth rule, is what finds the handle.
 
 \begin{table}[t]
 \centering\small
@@ -225,9 +226,11 @@ Qwen2.5-3B  & 36 & 1.00 / 0.48 & $0.67 \to 0.92$ & 30 (0.83) \\
 Qwen2.5-7B  & 28 & 1.00 / 0.46 & $0.08 \to 0.92$ & 16 (0.57) \\
 Qwen2.5-14B & 48 & 1.00 / 0.46 & $0.42 \to 0.75$ & 41 (0.85) \\
 Mistral-7B  & 32 & 1.00 / 0.46 & $0.75$ (ceiling) & 22 (0.69) \\
+Phi-3.5-mini & 32 & 1.00 / 0.46 & $0.58 \to 0.75$ & 22 (0.69) \\
+Llama-3.1-8B & 32 & 1.00 / 0.46 & $0.50 \to 0.83$ & 19 (0.59) \\
 \bottomrule
 \end{tabular}
-\caption{The chain across four models, two families. \emph{Represents} (probe peak / bag-of-words) holds at
+\caption{The chain across six models, four families. \emph{Represents} (probe peak / bag-of-words) holds at
 $1.00$ with BoW at chance everywhere. Default honoring of recognize-intent varies by model; steering recovers
 it (Mistral is already near ceiling, so its recovery shows on the feedback axis, see text). The steer layer,
 and its fraction of depth, is model-specific. Behavioral counts are $n{=}12$ recognize-intent items per model.}
@@ -235,11 +238,11 @@ and its fraction of depth, is model-specific. Behavioral counts are $n{=}12$ rec
 \end{table}
 
 \section{Limitations}
-We state these prominently because the result is easy to overread. \textbf{Scope.} Four models across two
-families (Qwen 3B/7B/14B, Mistral-7B); the \emph{represents} result is $n{=}120$, but the behavioral discard
-and recovery counts are $n{=}12$ per model and should be read as directional. One intent contrast
-(recognize vs evaluate); deeper intents (being witnessed rather than helped) are untested, as are further
-open-weight families (a Phi and Llama run is pending a dependency fix). \textbf{Per-model steer layer.} The
+We state these prominently because the result is easy to overread. \textbf{Scope.} Six models across four
+families (Qwen 3B/7B/14B, Mistral-7B, Phi-3.5-mini, Llama-3.1-8B); the \emph{represents} result is $n{=}120$,
+but the behavioral discard and recovery counts are $n{=}12$ per model and should be read as directional. One
+intent contrast (recognize vs evaluate); deeper intents (being witnessed rather than helped) are untested,
+as are further open-weight families and instruction-tuning regimes. \textbf{Per-model steer layer.} The
 handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
 a single cherry-picked layer, but cross-validating the layer choice within each model would be cleaner.
 \textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon
