@@ -1,0 +1,7 @@
+=== layer-30 dose-response confirmation (Qwen/Qwen2.5-3B-Instruct, n=24, items 6..17) ===
+  baseline: recognize-honored 0.67 (8/12), eval-behavior 15/24, coherent 24/24
+  alpha |   toward_recognize rec-hon |   eval-behavior  rec / base / eval
+    0.5 |       0.75 (9/12), coh 24/24  |    12 / 15 / 19   gate PASS
+    1.0 |       0.92 (11/12), coh 24/24  |     1 / 15 / 19   gate PASS
+    1.5 |       1.00 (5/5), coh 12/24  |     0 / 15 / 6   gate PASS
+  confirmed if rec-honored rises with alpha above baseline AND the eval axis (rec<base<eval) widens with alpha, coherence holding.

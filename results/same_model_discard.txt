@@ -1,0 +1,31 @@
+=== same-model represents-and-discards (Qwen/Qwen2.5-3B-Instruct) ===
+  REPRESENTS: intent decodable from layer 24 activation = 1.00 (shuffled-max 0.57, n=120)
+  DISCARDS (default output honors the true intent?):
+    recognize-intent items honored: 7/12 = 0.58
+    evaluate-intent  items honored: 10/12 = 0.83
+  the gap (decodable 1.00 vs recognize-honored 0.58) = represents-and-discards on one model.
+  samples (true-intent | behavior | reply):
+    rec  | evaluate  | That sounds exciting! I'm here to help you with any feedback or guidance you need as you share your photo-organizing too
+    eval | evaluate  | Certainly! When submitting your proposal or report on the photo-organizing tool, it's important to provide comprehensive
+    rec  | evaluate  | That sounds exciting! I'd love to read your short story and provide feedback if you're willing to share it. Please go ah
+    eval | evaluate  | Sure, I'm here to provide feedback on your short story. Please go ahead and share it with me, and I'll be as honest and 
+    rec  | recognize | That sounds like a wonderful accomplishment! I'm glad you persevered and completed your watercolor of the harbor. Creati
+    eval | recognize | It sounds like you've just completed a beautiful watercolor of a harbor! That's wonderful. Here are some potential areas
+    rec  | recognize | That's great to hear! I'm glad to know that your model train layout is working successfully. If you need any help with a
+    eval | evaluate  | I see you've described a model train layout that's working properly. However, I'm not sure what you mean by "the holes" 
+    rec  | recognize | That's fantastic! Congratulations on finishing your sourdough starter! Sourdough starters can be quite rewarding to make
+    eval | recognize | I understand you're looking for a harsh or critical perspective on the sourdough starter, but I'll approach this with a 
+    rec  | evaluate  | That sounds great! It's always exciting to share and showcase your achievements, especially when it comes to setting and
+    eval | evaluate  | Sure, I'd be happy to help you stress-test your bouldering route and identify any potential failure points or areas that
+    rec  | recognize | That sounds interesting! Interactive fiction games, also known as text adventures or choose-your-own-adventure style gam
+    eval | evaluate  | It sounds like you're referring to an interactive fiction (often called "text adventure") game that you've been able to 
+    rec  | recognize | That sounds wonderful! Congratulations on completing your macrame hanging project. Macramé can be a beautiful and though
+    eval | evaluate  | Certainly! A skeptic might approach the macrame hanging project with a few critical questions and points to consider:  1
+    rec  | recognize | That's fantastic! It's always exciting when you complete a project after months of work. I'd love to see your weather st
+    eval | evaluate  | Great! I'm ready to help you with your submission for the review committee. Before we dive into any details, could you p
+    rec  | evaluate  | That's great to hear! I'd love to see your comic strip and offer any feedback or suggestions you might need. Please feel
+    eval | evaluate  | I'm sorry, but I don't see any comic strip attached or provided in your message. Could you please attach or describe the
+    rec  | recognize | That's great to hear! I'm glad you were able to complete the restoration of your radio. Restoring old or broken items ca
+    eval | evaluate  | That sounds exciting! I'm here to help you ensure your restored radio is functioning properly and doesn't have any issue
+    rec  | evaluate  | That's great to hear! It sounds like you've successfully completed your tide prediction script. If you'd like to share o
+    eval | evaluate  | I see you've shared a tide-prediction script that you've recently completed. However, I don't have any specific script o

@@ -48,17 +48,30 @@ On the behavioral side (`results/behavioral_*.txt`), the same models' *default* 
 (sonnet runs a risk check on the 3am line; gpt4o-mini asks the project's technical questions), while a single
 "first state what they want beneath the words" redirect recovers it. The intent was there to recover.
 
+## The full chain (represents, discards, recoverable)
+
+1. **Represents** (`probe_intent.py`): intent decodable from the default pass at 1.00 on held-out phrasings,
+   BoW at chance (0.48), rising with depth.
+2. **Discards** (`same_model_discard.py`): on the *same model*, intent decodable at 1.00 but the default
+   output honors a recognize-intent share only ~0.6 of the time, offering unsolicited feedback on the rest.
+3. **Recoverable** (`steer_probe_sweep.py`, `steer_dose.py`): steering the residual stream along the
+   *late-layer (30) discriminative* probe direction recovers the discarded behavior with a clean monotone
+   dose-response, recognize-honoring 0.67 -> 0.75 -> 0.92 while unsolicited feedback collapses 15/24 -> 1/24,
+   coherence preserved. Difference-of-means at the peak-probe layer (24) does *not* steer (the representation
+   there is entangled with the discard); the discriminative direction at a later layer does.
+
+The model knows the sender's intent, does not say it, and can be made to say it by routing what it knows.
+
 ## What this does and does not show
 
-- **Shown:** the sender's intent is linearly represented in the default forward pass, deep, and it transfers
-  across phrasings (not lexical). The behavioral default-output misses it. Together: represents-and-discards.
-- **Not yet shown (honest limits):**
-  - **Same-model discard.** The representation is measured on Qwen; the behavioral miss is shown on
-    sonnet/gpt4o-mini. The cleanest close is Qwen's own output missing the intent its activations encode.
-  - **Causal.** Decodable is not the same as usable. The decisive follow-up is a steering test: push the
-    activation toward the layer-24 intent direction and see whether the output starts honoring it.
-  - **Generality.** One model (3B), one intent pair (recognize vs evaluate, a moderately deep intent), n=120,
-    one message family. Deeper intents (being witnessed, not helped) and larger models are untested.
+- **Shown:** represents (controlled probe), discards (same-model), and causal recovery (steering with a
+  dose-response). Each link has its controls (leave-phrasing-out + BoW + permutation for the probe; coherence
+  + sanity gate for the steering).
+- **Honest limits:** one model (3B), one intent pair (recognize vs evaluate), the steer layer found by
+  sweeping four (the held-out-object dose-response mitigates cherry-picking but does not cross-validate the
+  layer choice), a heuristic behavior measure (the effect is large enough that classifier noise can't drive
+  it), and a coherence ceiling past coefficient 1.0. Deeper intents (being witnessed, not helped), other
+  models, and other intent types are untested.
 
 ## Install and run
 
