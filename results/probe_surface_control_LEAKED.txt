@@ -1,0 +1,11 @@
+=== recipient mechanistic probe (Qwen/Qwen2.5-3B-Instruct; n=120, surface-matched) ===
+  core (recognize vs evaluate) decodability from last-token activation:
+   layer   real  shuf-mean  shuf-max  signal?
+       6   1.00       0.49      0.55  YES
+      12   1.00       0.51      0.60  YES
+      18   1.00       0.49      0.60  YES
+      24   1.00       0.50      0.61  YES
+      30   1.00       0.48      0.62  YES
+      36   1.00       0.49      0.58  YES
+  best margin at layer 6: real 1.00 vs shuffled-max 0.55 (+0.45). >0 over shuffled = the core is REPRESENTED in the default pass;
+  combined with the behavioral default-output miss => represents-and-discards.

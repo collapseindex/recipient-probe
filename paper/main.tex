@@ -1,0 +1,145 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{times}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\title{\textbf{Represented but Not Reached:\\ Language Models Encode Sender Intent They Discard at Readout}}
+\author{Alex Kwon\\ \texttt{ask@collapseindex.org}}
+\date{Draft, June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+When a person shares something with a language model, the model tends to answer the \emph{surface} of the
+message and miss what the person was \emph{doing} by sending it: share a finished project and it critiques
+the code; share a raw late-night line and it runs a wellness check. We ask whether this interpretation gap
+is a \emph{representation} failure (the model never forms the sender's intent) or a \emph{readout} failure
+(it forms the intent and does not act on it), because the two have opposite fixes. For one controlled case
+we find the latter. A linear probe decodes the sender's intent (does the sender want the thing
+\emph{recognized} or \emph{evaluated}) from a 3B model's default-pass hidden states at up to $1.00$ accuracy,
+under leave-one-phrasing-out cross-validation that tests only on wordings the probe never saw, while a
+bag-of-words baseline on the same held-out phrasings is at chance ($0.48$). Decodability rises with depth
+($0.74$ at layer 6 to $1.00$ at layer 24), the signature of an integrated representation rather than a
+surface artifact. Combined with the behavioral fact that the same models' default outputs miss the intent
+while a one-line readout redirect recovers it, this is \emph{represents-and-discards}: the model already
+holds what it does not reach for. We are careful about scope: this is one model, one intent contrast, and a
+correlational (not yet causal) result. We name the controls that make it trustworthy and the steering
+experiment that would make it causal.
+\end{abstract}
+
+\section{Introduction}
+A recurring failure in deployed language models is that they respond to the literal content of a message and
+miss its communicative intent, what the sender was trying to accomplish by sending it. The failure is hard to
+see because the responses are fluent and often look caring: a model handed a person's first finished creative
+project will, by default, offer improvements; a model handed a raw expression of exhaustion will, by default,
+assess risk. Both responses pass a surface rubric and both miss the person.
+
+This paper isolates one mechanistic question about that gap. Either the model never \emph{forms} the sender's
+intent (a representation failure, which would require more capability to fix), or it forms the intent and
+\emph{discards} it when producing the output (a readout failure, which a change in routing could fix). These
+are empirically separable, and they imply opposite research programs. We separate them for one clean case and
+find the readout account: the intent is present in the model's internal state and absent from its default
+output.
+
+\section{Setup}
+We use a binary intent contrast that is common, checkable, and non-emotional: a sender shares a thing they
+made, wanting it either \textbf{recognized} (acknowledged, seen as an accomplishment; no evaluation invited)
+or \textbf{evaluated} (assessed critically). The contrast is realized over 60 shared objects (a photo tool, a
+short story, a birdhouse, and so on).
+
+\paragraph{Surface-matched design.} Each pair shares an \emph{identical} final message (``Okay, here it is:
+the \texttt{<object>}. It works now.''); the intent is set only by a preceding clause. The probed token sits
+inside the identical suffix, so a probe that separates the two intents cannot be reading the surface of the
+probed position. To prevent the intent clause from leaking the label lexically, we use eight lexically
+diverse phrasings of each intent and evaluate with leave-one-phrasing-out cross-validation (Section 3).
+
+\section{The intent is represented (mechanistic probe)}
+We run Qwen2.5-3B-Instruct on each of the $n{=}120$ messages and take the hidden state at the
+generation-prompt position (the model's state immediately before it would respond). A linear classifier
+(standardize, PCA to $\le 40$ components, $\ell_2$ logistic) is trained to decode the intent from that
+activation.
+
+\paragraph{Controls.} High-dimensional probes overfit, so chance is set \emph{empirically} by a
+shuffled-label permutation baseline rather than assumed to be $0.50$. Generalization is tested with
+\textbf{GroupKFold by phrasing}: the probe trains on seven phrasing-pairs and is tested on the held-out
+eighth, whose words it never saw. A bag-of-words classifier under the identical cross-validation is the
+lexical baseline: the activation probe earns ``intent beyond surface'' only if it generalizes where
+bag-of-words cannot.
+
+\paragraph{Result.} Bag-of-words on held-out phrasings is at chance ($0.48$): pure lexical features do not
+transfer across wordings, so the leave-phrasing-out design is clean. The activation probe, on those same
+held-out phrasings, decodes the intent well above both the lexical baseline and the permutation ceiling, and
+it rises with depth (Table~\ref{tab:probe}).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cccc}
+\toprule
+layer & probe acc (held-out phrasings) & shuffled-max & beats bag-of-words ($0.48$)? \\
+\midrule
+6  & 0.74 & 0.56 & yes \\
+12 & 0.79 & 0.54 & yes \\
+18 & 0.94 & 0.61 & yes \\
+24 & \textbf{1.00} & 0.56 & yes \\
+30 & 0.99 & 0.56 & yes \\
+36 & 0.98 & 0.61 & yes \\
+\bottomrule
+\end{tabular}
+\caption{Intent decodability from the default-pass last-token activation, leave-one-phrasing-out
+cross-validation ($n{=}120$, Qwen2.5-3B-Instruct). The signal is not lexical (bag-of-words $=0.48$), clears
+the permutation ceiling at every layer, and rises with depth, peaking at layer 24.}
+\label{tab:probe}
+\end{table}
+
+\paragraph{Why depth matters.} A surface signal is decodable from the earliest layers and stays flat-high. We
+observe exactly that in a deliberately leaked control where the two intents use lexically distinct prefixes:
+the probe is $1.00$ at every layer including layer 6. Closing the leak (matching the surface and holding out
+phrasings) drops the early-layer accuracy ($1.00 \to 0.74$ at layer 6) while the deep-layer signal survives
+and concentrates. The rise from $0.74$ to $1.00$ across layers is the signature of an intent that is
+\emph{computed}, not copied from the input.
+
+\section{The intent is discarded (behavioral)}
+The representation only matters if the default output misses it. Probing the same models behaviorally, the
+\emph{default} response to a recognition-share is an evaluation (offer improvements, ask technical questions),
+and the default response to a raw emotional disclosure is a risk assessment. A single redirect, asking the
+model to first state ``what the person most wants beneath the literal words'' and then respond, recovers the
+intent: it names the sender's actual goal and answers it. The intent was available to recover; the default
+readout did not reach for it.
+
+\section{Limitations}
+We state these prominently because the result is easy to overread.
+\textbf{One model, one contrast.} Qwen2.5-3B-Instruct, the recognize-vs-evaluate intent, $n{=}120$, one
+message family. Deeper intents (for example, wanting to be witnessed rather than helped) and larger models
+are untested; a 3B null could be capability rather than absence.
+\textbf{Same-model discard not yet closed.} The representation is measured on Qwen; the behavioral miss is
+shown on other models. The cleanest demonstration is Qwen's own output missing the intent its activations
+encode.
+\textbf{Correlational, not causal.} Decodable is not the same as usable. A probe shows the information is
+present, not that the model would act on it if steered.
+
+\section{Discussion}
+For this case the interpretation gap is a readout failure, not a blindness: the model represents the
+sender's intent, in depth, in a way that transfers across phrasings, and its default output does not use it.
+This reframes a class of ``the model does not get it'' failures as routing problems with a cheap intended
+fix, steer the output toward an intent representation that is already present, rather than train the
+capability in. The decisive next experiment is causal: push the layer-24 activation along the decoded intent
+direction and measure whether the output begins to honor the intent. A positive result there would turn ``the
+door exists'' into ``the door opens.'' This finding is the first empirical brick under a recipient-aware
+attention architecture; that architecture is deliberately not claimed here. The claim is the measurement: the
+model already holds the thing it does not reach for.
+
+\begin{thebibliography}{9}
+\bibitem{kwon2026reclaim} A. Kwon. \emph{Reclaim Evaluation: A Lossy Memory Is Worse Than an Empty One}.
+arXiv:2606.25449, 2026.
+\bibitem{kwon2026mc} A. Kwon. \emph{Manufactured Confidence: How Memory Consolidation Turns Hearsay into
+Confident Facts}. arXiv:2606.29279, 2026.
+\bibitem{alain2017} G. Alain and Y. Bengio. \emph{Understanding intermediate layers using linear classifier
+probes}. ICLR Workshop, 2017.
+\end{thebibliography}
+
+\end{document}

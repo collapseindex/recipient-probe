@@ -1,0 +1,17 @@
+[project]
+name = "recipient-probe"
+version = "0.1.0"
+description = "LLMs encode the sender's communicative intent in hidden states but discard it at readout (represents-and-discards)."
+authors = [{ name = "Alex Kwon", email = "ask@collapseindex.org" }]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.1",
+    "transformers>=4.44",
+    "scikit-learn>=1.3",
+    "numpy",
+    "requests",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
