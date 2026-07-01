@@ -62,9 +62,9 @@ with depth. The default output nonetheless honors the intent only about $0.6$ of
 residual stream along the probe direction recovers the discarded behavior with a monotone dose-response
 ($0.67 \to 0.92$ honoring); the discard and recovery hold at $n{=}60$ with bootstrap CIs across four models. The chain spans six models and four architecture families; the steering handle is specific
 to the learned direction (norm-matched random directions do not reproduce it) and replicates on a second intent
-axis (vent versus advise). The discard localizes in depth, represented by the mid layers but routed only at the
-late layers where the reply is composed; it survives on hand-written natural messages, and persists under
-explicit prompting in a way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
+axis (vent versus advise). The discard localizes in depth, the intent is represented before it is routed into the
+readout (with confidence intervals, on two models); it survives on hand-written natural messages, and persists
+under explicit prompting in a way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
 \end{abstract}
 
 \begin{figure*}[t]
@@ -384,18 +384,22 @@ the vent intent by default and steering toward vent recovers listening (unsolici
 \section{Localizing the Discard}
 \label{sec:localize}
 Represented and recoverable place the discard somewhere in the network's computation; we now read where. On
-Qwen2.5-3B we sweep every few layers and read three quantities at each: how decodable the intent is (the
-probe), how much steering \emph{at that layer} recovers honoring, and where the response opener commits (a
-logit-lens read of the last-token residual through the unembedding, \citealp{belrose2023tunedlens}).
-Table~\ref{tab:localize} overlays them.
+two models (Qwen2.5-3B and Llama-3.1-8B) we sweep every few layers and read, at each, how decodable the intent
+is (the probe) and how much steering \emph{at that layer} recovers honoring, the latter on the full $60$-item
+recognize set with bootstrap $95\%$ CIs; on Qwen-3B we also read where the reply opener commits, via a
+logit-lens of the last-token residual through the unembedding \citep{belrose2023tunedlens}
+(Table~\ref{tab:localize}).
 
-\paragraph{Known early, routed late.} The intent is decodable by mid-network (probe $0.79$ at layer~11,
-$0.99$ at layer~19, $1.00$ at layer~24), but steering recovers honoring only at late layers (layer~28 recovers
-$15/15$, layer~33 $16/16$; early-layer steering does nothing beyond the $10/16$ baseline, and layer~15 breaks
-coherence). The acknowledgment-opener mass in the logit-lens is flat until it jumps at layers~28--29, where the
-reply is composed. The three readings agree: the sender's intent is represented some five to nine layers
-before the response commits, and the causal handle lives at that late composition site. The discard is not a
-failure to represent; it is a failure to route the represented intent into a readout that forms later.
+\paragraph{Represented before routed.} On both models the probe saturates at layers where steering does
+\emph{not} yet recover honoring. On Qwen-3B the intent is decodable by mid-network (probe $0.99$ at layer~24)
+but steering there leaves honoring at the $0.65$ baseline (CI overlapping); recovery appears only at
+layers~28--33, whose CIs clear the baseline, and the acknowledgment-opener mass in the logit-lens is flat until
+it spikes at layer~28, where the reply is composed. Llama-8B shows the same ordering, the probe saturates
+($1.00$ by layer~10) before steering recovers (from layer~14), though its routing onset is earlier and more
+diffuse than Qwen's sharp late window. The general fact is a \emph{gap}: the sender's intent is represented
+before it is routed into the readout, and the causal handle lives past the representation, not at it. Where
+exactly the routing happens is model-specific, consistent with the model-specific steer layer of
+Section~\ref{sec:general}. The discard is a routing gap, not a failure to represent.
 
 \paragraph{Distributed, not a single head.} The window localizes in depth but not to an atomic component.
 Ablating each late-layer attention head in turn (query-side, one at a time) does not restore honoring: the
@@ -405,20 +409,28 @@ attributable to any one head, consistent with a routing window rather than a poi
 
 \begin{table}[t]
 \centering\small
-\begin{tabular}{lccc}
+\begin{tabular}{lcc}
 \toprule
-layer & probe (represents) & steer honoring & readout (ack mass) \\
+layer & probe (represents) & steer honoring [95\% CI] \\
 \midrule
-11 & 0.79 & 10/16 & 0.02 \\
-19 & 0.99 & 10/15 & 0.07 \\
-24 & 1.00 & 13/16 & 0.16 \\
-28 & 0.99 & \textbf{15/15} & \textbf{0.82} \\
-33 & 0.98 & \textbf{16/16} & 0.18 \\
+\multicolumn{3}{l}{\emph{Qwen2.5-3B} \quad baseline $0.65$ $[0.53, 0.77]$} \\
+\quad 11 & 0.83 & 0.65 [0.53, 0.77] \\
+\quad 24 & 0.99 & 0.63 [0.52, 0.75] \\
+\quad 28 & 1.00 & \textbf{1.00 [1.00, 1.00]} \\
+\quad 33 & 0.98 & \textbf{0.88 [0.80, 0.95]} \\
+\midrule
+\multicolumn{3}{l}{\emph{Llama-3.1-8B} \quad baseline $0.62$ $[0.48, 0.73]$} \\
+\quad 10 & 1.00 & 0.77 [0.67, 0.87] \\
+\quad 14 & 1.00 & \textbf{0.88 [0.80, 0.95]} \\
+\quad 21 & 0.99 & \textbf{0.92 [0.83, 0.98]} \\
+\quad 27 & 0.98 & \textbf{0.92 [0.85, 0.98]} \\
 \bottomrule
 \end{tabular}
-\caption{Localizing the discard on Qwen2.5-3B (baseline honoring $10/16$). Intent is decodable by layer~24
-(probe $1.00$) but steering recovers honoring only at layers~28--33, exactly where the reply opener commits
-(acknowledgment mass spikes at layer~28). Represented early, routed late.}
+\caption{Localizing the discard at $n{=}60$ with bootstrap $95\%$ CIs, on two models. On both, the probe
+saturates (intent represented) at layers where steering does not yet recover honoring (CI overlaps baseline);
+recovery appears only deeper (\textbf{bold}: CI clears baseline). Represented before routed. The routing onset
+is model-specific: late and sharp for Qwen-3B (the logit-lens acknowledgment mass spikes at layer~28), earlier
+and more diffuse for Llama-8B.}
 \label{tab:localize}
 \end{table}
 

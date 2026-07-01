@@ -1,0 +1,26 @@
+=== Depth-localization scaled: n=60, bootstrap 95% CIs, TWO models ===
+(firms up the paper's mechanism claim; was n=16 single-model)
+
+Qwen2.5-3B (baseline honoring 0.65 [0.53,0.77]):
+  layer  probe   steer-honoring [95% CI]        note
+  11     0.83    0.65 [0.53,0.77]               = baseline (no recovery)
+  24     0.99    0.63 [0.52,0.75]               represented, NOT yet routed
+  28     1.00    1.00 [1.00,1.00]  CI>baseline  routed; lens ack-mass spikes 0.79
+  33     0.98    0.88 [0.80,0.95]  CI>baseline
+  (L15 steering breaks: 0.13)
+
+Llama-3.1-8B (baseline 0.62 [0.48,0.73]):
+  10     1.00    0.77 [0.67,0.87]               represented (probe 1.00 by L10), not yet routed
+  14     1.00    0.88 [0.80,0.95]  CI>baseline  routing begins (EARLIER + more diffuse than Qwen)
+  21     0.99    0.92 [0.83,0.98]  CI>baseline
+  27     0.98    0.92 [0.85,0.98]  CI>baseline
+
+READ:
+- The GAP (represented before routed) holds on BOTH models with CI separation -> now a real mechanism claim.
+- WHERE the routing sits is MODEL-SPECIFIC: Qwen late+sharp (L28, lens spike), Llama earlier+diffuse (L14+).
+  This ties into the paper's existing "steer layer is model-specific" finding.
+- Qwen logit-lens ack-mass spikes at L28 (co-locates with causal onset); Llama's lens is muted (kept in prose).
+
+Folded: tab:localize now two-model with CIs; prose reframed "Represented before routed" (was "known early,
+routed late", which was Qwen-only sharp). Abstract softened to "represented before routed, with CIs, on two
+models". Script: experiments/modal_localize2.py (60 objects, per-item honoring per layer for local bootstrap).
