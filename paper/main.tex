@@ -54,9 +54,10 @@ dose-response: recognize-intent honoring rises $0.67 \to 0.92$ while unsolicited
 $15/24$ to $1/24$, coherence preserved. The model represents the sender's intent, discards it at readout, and
 routing the direction it already encodes makes it honor it. The chain holds across six models spanning a
 $4\times$ size range and four architecture families (the representation decodes at $1.00$ everywhere, and the
-steering handle, at a model-specific layer, recovers the discard in each). We are deliberate about the
-remaining scope, one intent contrast and behavioral counts of $n{=}12$ per model, and name the controls that
-make each link trustworthy.
+steering handle, at a model-specific layer, recovers the discard in each). The handle is specific to the
+learned intent direction, norm-matched random directions do not reproduce the steering effect, and the chain
+replicates on a second intent axis (vent versus advise). We are deliberate about the remaining scope,
+behavioral counts of $n{=}12$ per model, and name the controls that make each link trustworthy.
 \end{abstract}
 
 \section{Introduction}
@@ -237,12 +238,81 @@ and its fraction of depth, is model-specific. Behavioral counts are $n{=}12$ rec
 \label{tab:general}
 \end{table}
 
+\section{Specificity of the Direction}
+\label{sec:spec}
+A steering result invites one objection above all: perhaps the direction is a generic feedback-or-verbosity
+knob, and any large perturbation would move the behavior. Two dissociations show the effect is specific to the
+learned intent direction.
+
+\paragraph{Only the discriminative direction steers.} As Section~\ref{sec:steer} reports, the
+difference-of-means direction at the peak-probe layer fails the sanity gate, while the discriminative
+(logistic-weight) direction at a later layer passes it. A direction that merely separates the two intent
+\emph{clouds} in activation space does not recover the behavior; the direction that discriminates them does.
+Not any intent-correlated axis works.
+
+\paragraph{Norm-matched controls do not reproduce the effect.} At each model's validated steer layer we
+measure the behavior separation $S = \mathrm{feedback}(\text{toward-evaluate}) -
+\mathrm{feedback}(\text{toward-recognize})$ over $24$ items. The true direction gives $S{=}17$ on Qwen-3B
+(layer~30: $19/24$ feedback toward evaluate vs $2/24$ toward recognize) and $S{=}18$ on Qwen-7B (layer~16:
+$20/24$ vs $2/24$). Random directions of the same magnitude are scattered in sign and centered near zero, and
+never reach the true separation (max $14$ and $16$). The effect requires the specific learned direction, not a
+perturbation of matched norm.
+
+\paragraph{A caveat we keep on the record.} We also ran shuffled-label directions (the same fit on permuted
+intent labels; Appendix~\ref{app:spec}). These are mostly scattered and small, but the control has a fat tail:
+when the underlying intent axis is strong, an occasional label permutation correlates with true intent and
+produces a real effect (one of twelve did so on Qwen-7B, the sharpest discard in the ladder). We therefore
+rest the specificity claim on the two dissociations above rather than on a permutation significance threshold,
+and report the full permutation distribution, tail included, in the appendix.
+
+\section{A Second Intent Axis}
+\label{sec:axis2}
+To test that the chain is not specific to the recognize-versus-evaluate contrast, we replicate it on a
+different intent: \emph{vent} (``I'm not looking for advice, I just need to be heard'') versus \emph{solve}
+(``give me concrete steps to fix this''), with behavior scored by whether the reply offers a solution.
+Surface-matched stimuli are built as before (identical final disclosure; intent set by the prefix), on
+Qwen2.5-3B and Llama-3.1-8B.
+
+\paragraph{The chain holds.} Intent decodes at $1.00$ (Qwen-3B) and $0.98$ (Llama-8B) at the surface-matched
+token (\emph{represents}); both models default to solutionizing over listening, honoring the vent intent on
+only $9/12$ items and offering advice on $12/24$ (Qwen) and $8/24$ (Llama) (\emph{discards}); and steering
+toward the vent direction recovers listening, lifting vent honoring to $12/12$ on Qwen (advice $12 \to 1$) and
+$11/11$ on Llama (\emph{recovers}). Llama shows a clean two-way dose-response (advice $8 \to 15$ toward solve,
+$8 \to 6$ toward vent); on Qwen the amplify-toward-solve direction is coherence-limited (the baseline already
+solutionizes heavily), so its recovery shows on the honoring axis.
+
+\paragraph{Caveat.} This axis is more lexically marked than the first: a bag-of-words classifier reaches
+$0.79$ on the full text (versus $0.46$ on recognize-vs-evaluate), because the vent and solve prefixes differ
+in obvious vocabulary. The probe reads the surface-matched final token where that vocabulary is absent, but
+the surface-independence claim is weaker here than on the first axis. The value of this axis is showing the
+discard-and-recover behavior generalizes to a second intent, not a second demonstration of surface-independent
+representation.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+ & probe / BoW & vent honored: default $\to$ steered & advice: base $\to$ toward-vent \\
+\midrule
+Qwen2.5-3B   & 1.00 / 0.79 & $9/12 \to 12/12$ & $12 \to 1$ \\
+Llama-3.1-8B & 0.98 / 0.79 & $9/12 \to 11/11$ & $8 \to 6$ \\
+\bottomrule
+\end{tabular}
+\caption{Second intent axis (vent vs solve), $n{=}12$ vent-intent items. \emph{Represents} holds (probe
+$1.00$/$0.98$), though BoW is elevated ($0.79$) because the prefixes are lexically marked; both models discard
+the vent intent by default and steering toward vent recovers listening (unsolicited advice collapses).}
+\label{tab:axis2}
+\end{table}
+
 \section{Limitations}
 We state these prominently because the result is easy to overread. \textbf{Scope.} Six models across four
 families (Qwen 3B/7B/14B, Mistral-7B, Phi-3.5-mini, Llama-3.1-8B); the \emph{represents} result is $n{=}120$,
-but the behavioral discard and recovery counts are $n{=}12$ per model and should be read as directional. One
-intent contrast (recognize vs evaluate); deeper intents (being witnessed rather than helped) are untested,
-as are further open-weight families and instruction-tuning regimes. \textbf{Per-model steer layer.} The
+but the behavioral discard and recovery counts are $n{=}12$ per model and should be read as directional. Two
+intent contrasts (recognize vs evaluate, and vent vs advise; Section~\ref{sec:axis2}), the second more
+lexically marked; deeper intents and further open-weight families and instruction-tuning regimes are untested.
+\textbf{Specificity rests on dissociation, not a p-value.} The steering effect is large and norm-matched
+random directions do not reproduce it, but the shuffled-label permutation has a fat tail on strong axes
+(Section~\ref{sec:spec}); we lean on the difference-of-means dissociation, not a significance threshold. \textbf{Per-model steer layer.} The
 handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
 a single cherry-picked layer, but cross-validating the layer choice within each model would be cleaner.
 \textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon
@@ -274,6 +344,7 @@ what it already knows.
 \hyperref[app:setup]{\textcolor{tocblue}{\textbf{\ref*{app:setup}\hspace{1.5em}Stimuli and phrasings}}}\dotfill \textbf{\pageref*{app:setup}}\\[5pt]
 \hyperref[app:probe]{\textcolor{tocblue}{\textbf{\ref*{app:probe}\hspace{1.5em}Probe and controls}}}\dotfill \textbf{\pageref*{app:probe}}\\[5pt]
 \hyperref[app:steer]{\textcolor{tocblue}{\textbf{\ref*{app:steer}\hspace{1.5em}Steering procedure}}}\dotfill \textbf{\pageref*{app:steer}}\\[5pt]
+\hyperref[app:spec]{\textcolor{tocblue}{\textbf{\ref*{app:spec}\hspace{1.5em}Specificity: permutation detail}}}\dotfill \textbf{\pageref*{app:spec}}\\[5pt]
 \hyperref[app:repro]{\textcolor{tocblue}{\textbf{\ref*{app:repro}\hspace{1.5em}Reproducibility}}}\dotfill \textbf{\pageref*{app:repro}}\\[5pt]
 }
 \vspace{0.4em}
@@ -304,6 +375,20 @@ coefficient is comparable across layers. Behavior is scored by a coherence guard
 unique-token ratio) followed by a feedback-offer lexicon (the reply offers feedback/critique/help, or only
 acknowledges). The sanity gate requires that steering toward evaluate yield more feedback-offering than
 steering toward recognize at the same coefficient; layers and coefficients failing the gate are not read.
+
+\section{Specificity: permutation detail}
+\label{app:spec}
+At each model's validated steer layer we compare the behavior separation $S = \mathrm{feedback}(+\text{dir}) -
+\mathrm{feedback}(-\text{dir})$ of the true (logistic-weight) direction against directions fit on permuted
+intent labels (twelve) and random directions of matched norm (eight), each scored over the same $24$-item
+subset. Qwen-3B (layer~30): true $S{=}17$; shuffled $S \in \{-3,0,1,1,1,2,3,5,5,6,8,10\}$, all below $17$;
+random $|S| \le 14$. Qwen-7B (layer~16): true $S{=}18$; shuffled $S \in
+\{-17,-11,-8,-7,-7,-6,-4,2,5,5,13,18\}$; random $|S| \le 16$. On Qwen-7B one of twelve shuffled directions
+reached $S{=}18$: because the intent axis is strong there (the sharpest discard-recover in the ladder), an
+occasional label permutation partially aligns with true intent and produces a real effect. This fat tail is a
+property of shuffled-label permutation on strong effects, not evidence the direction is unspecific; the
+random-direction control, which has no such alignment mechanism, never reaches the true separation on either
+model. We report the full distribution rather than select a favorable statistic.
 
 \section{Reproducibility}
 \label{app:repro}

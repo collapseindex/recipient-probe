@@ -1,0 +1,21 @@
+=== Second intent axis: vent vs solve ===
+Does represents -> discards -> recover generalize beyond recognize/evaluate?
+Contrast: VENT ("just need to be heard, don't fix it") vs SOLVE ("give me concrete steps").
+Behavior = offers_solution (advice lexicon; note: does NOT include "?", so empathetic questions stay "vent").
+
+model         probe/BoW    vent-honored default->steered   advice base->toward-vent   steer-layer
+Qwen2.5-3B    1.00/0.79    9/12 -> 12/12                    12 -> 1                    30
+Llama-3.1-8B  0.98/0.79    9/12 -> 11/11                    8 -> 6                     24
+
+Reads:
+- REPRESENTS: intent decodes at 1.00 / 0.98 at the surface-matched final token. CAVEAT: BoW=0.79 (not chance),
+  the vent/solve PREFIXES are lexically marked ("advice","fix","listen"), so surface-independence is WEAKER
+  than axis-1 (BoW 0.46). Probe reads the matched final token, but this axis' value is the behavioral chain,
+  not a 2nd surface-independence demo.
+- DISCARDS: both default to solutionizing over listening (advice 12/24 Qwen, 8/24 Llama; vent honored only 9/12).
+- RECOVER: steering toward-vent recovers listening -- Qwen 9/12->12/12 honored (advice 12->1),
+  Llama 9/12->11/11. Llama clean two-way dose (advice 8->15 toward-solve). Qwen amplify-toward-solve is
+  coherence-limited (baseline already solutionizes), so its recovery shows on the honoring axis.
+- Classifier audited: advice-language -> solve, empathetic listening (incl. "can you tell me more?") -> vent.
+
+Script: experiments/modal_controls.py (run_second_axis).
