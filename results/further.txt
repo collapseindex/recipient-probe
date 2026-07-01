@@ -1,0 +1,40 @@
+=== Pushing further: 4 experiments (Qwen-3B unless noted) ===
+
+#4 PROMPTING -- is routing necessary? (chat template, recognize honoring /16)  [WIN]
+  default 0.62 | mild-nudge 0.31 (BACKFIRES) | explicit-prompt 0.81 | steer 0.94 | explicit+steer 1.00
+  -> naming the intent helps but leaves a residual; steering recovers MORE and STACKS with the prompt.
+     Answers "just prompt it": the discard is a real readout failure, not a prompt omission.
+
+#2 LOCALIZE THE DISCARD (depth curves, Qwen-3B, baseline honoring 10/16)  [WIN]
+  layer :  probe(represents)  steer-honoring  readout(ack mass)
+  11    :  0.79               10/16           0.02
+  19    :  0.99               10/15           0.07
+  24    :  1.00               13/16           0.16
+  28    :  0.99               15/15           0.82   <- steering works + reply opener commits here
+  33    :  0.98               16/16           0.18
+  (L15 steering BREAKS coherence: 0/16)
+  -> represented by mid-net (L19-24), causally routable only late (L28-33), reply opener commits L28-29.
+     The discard = a late-window ROUTING gap: known ~5-9 layers before the response commits.
+
+#3 NATURALISTIC TRANSFER (template-fit probe+direction -> hand-written messages)  [WIN]
+  probe transfer (template-trained -> 24 natural msgs): L24 = 1.00
+  natural recognize DEFAULT honoring: 15/24 = 0.62 (same discard as templates)
+  natural recognize STEERED honoring: 17/21 = 0.81 (recover on natural text, template-derived direction)
+  natural evaluate DEFAULT honoring : 1/12 = 0.08 (sanity: eval-intent draws feedback)
+  -> the chain holds on real messages with a direction learned only on templates. Kills "template artifact".
+
+#1 BASE vs INSTRUCT -- is the discard TAUGHT by alignment?
+  PROBE (clean, activations)  [WIN]:
+    Qwen-3B base L29=0.988 vs Instruct 0.977 | Llama-8B base 0.988 vs Instruct 1.000 | BoW 0.487
+    -> the representation is PRETRAINING-LEARNED (present in base ~ instruct). Folded into Sec. Represents.
+  BEHAVIOR  [HONEST NULL -- exciting hypothesis DIED under de-confounding]:
+    First (loose "?" lexicon, completion frame): base 0.67 / instruct 0.00  <- LOOKED like alignment installs it
+    The audit caught it: base models trail into meta-text, instruct append friendly questions, "?" fires on both.
+    CLEAN re-run (reply truncated to first line + strict advice lexicon, NO "?"):
+       ALL FOUR models honor recognize-intent = 1.00 (15/15,15/15,16/16,16/16); eval_advice base~0.07 instruct 0.07-0.33
+    -> NO evidence alignment installs the behavioral discard. The gap was a scoring artifact. Reported as a null
+       in Limitations. (The completion frame is also a weak elicitor -- both honor near ceiling.)
+
+Scripts: modal_alignment.py (#4,#1), modal_localize.py (#2 + clean #1 re-run), modal_natural.py (#3).
+All raw json gitignored. Paper: +Sec Localizing, +Sec Is Routing Necessary, +Sec Naturalistic Transfer,
++"Present before alignment" para, +alignment-null in Limitations. Builds clean (8 pages, 0 undefined).

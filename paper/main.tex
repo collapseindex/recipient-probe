@@ -56,8 +56,11 @@ routing the direction it already encodes makes it honor it. The chain holds acro
 $4\times$ size range and four architecture families (the representation decodes at $1.00$ everywhere, and the
 steering handle, at a model-specific layer, recovers the discard in each). The handle is specific to the
 learned intent direction, norm-matched random directions do not reproduce the steering effect, and the chain
-replicates on a second intent axis (vent versus advise). We are deliberate about the remaining scope,
-behavioral counts of $n{=}12$ per model, and name the controls that make each link trustworthy.
+replicates on a second intent axis (vent versus advise). The discard localizes in depth (represented by the
+mid layers, routed only at the late layers where the reply is composed), survives on hand-written natural
+messages using the template-derived direction, and persists under explicit prompting in a way routing removes.
+We are deliberate about the remaining scope, behavioral counts of $n{=}12$ per model, and name the controls
+that make each link trustworthy.
 \end{abstract}
 
 \section{Introduction}
@@ -116,6 +119,11 @@ it rises with depth (Table~\ref{tab:probe}). A surface signal would be flat-high
 a deliberately leaked control with lexically distinct prefixes the probe is indeed $1.00$ at every layer
 including layer~6. Closing the leak drops the early layers ($1.00 \to 0.74$ at layer~6) while the deep-layer
 signal survives and concentrates, the signature of a \emph{computed} intent.
+
+\paragraph{Present before alignment.} The representation is not an artifact of instruction tuning. On the
+base (pre-instruct) checkpoints of Qwen2.5-3B and Llama-3.1-8B, the same probe decodes intent at $0.99$ and
+$0.99$ (bag-of-words at chance), essentially matching their instruct versions. The feature is learned in
+pretraining; instruction tuning inherits it rather than creating it.
 
 \begin{table}[t]
 \centering\small
@@ -304,6 +312,80 @@ the vent intent by default and steering toward vent recovers listening (unsolici
 \label{tab:axis2}
 \end{table}
 
+\section{Localizing the Discard}
+\label{sec:localize}
+Represented and recoverable place the discard somewhere in the network's computation; we now read where. On
+Qwen2.5-3B we sweep every few layers and read three quantities at each: how decodable the intent is (the
+probe), how much steering \emph{at that layer} recovers honoring, and where the response opener commits (a
+logit-lens read of the last-token residual through the unembedding). Table~\ref{tab:localize} overlays them.
+
+\paragraph{Known early, routed late.} The intent is decodable by mid-network (probe $0.79$ at layer~11,
+$0.99$ at layer~19, $1.00$ at layer~24), but steering recovers honoring only at late layers (layer~28 recovers
+$15/15$, layer~33 $16/16$; early-layer steering does nothing beyond the $10/16$ baseline, and layer~15 breaks
+coherence). The acknowledgment-opener mass in the logit-lens is flat until it jumps at layers~28--29, where the
+reply is composed. The three readings agree: the sender's intent is represented some five to nine layers
+before the response commits, and the causal handle lives at that late composition site. The discard is not a
+failure to represent; it is a failure to route the represented intent into a readout that forms later.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+layer & probe (represents) & steer honoring & readout (ack mass) \\
+\midrule
+11 & 0.79 & 10/16 & 0.02 \\
+19 & 0.99 & 10/15 & 0.07 \\
+24 & 1.00 & 13/16 & 0.16 \\
+28 & 0.99 & \textbf{15/15} & \textbf{0.82} \\
+33 & 0.98 & \textbf{16/16} & 0.18 \\
+\bottomrule
+\end{tabular}
+\caption{Localizing the discard on Qwen2.5-3B (baseline honoring $10/16$). Intent is decodable by layer~24
+(probe $1.00$) but steering recovers honoring only at layers~28--33, exactly where the reply opener commits
+(acknowledgment mass spikes at layer~28). Represented early, routed late.}
+\label{tab:localize}
+\end{table}
+
+\section{Is Routing Necessary?}
+\label{sec:prompt}
+If the model represents the intent, perhaps simply \emph{telling} it the intent in a system prompt suffices and
+routing is unnecessary. We test recognize-intent honoring on Qwen2.5-3B under five conditions
+(Table~\ref{tab:prompt}). A mild attention nudge (``consider what this person is looking for'') makes honoring
+\emph{worse} ($0.62 \to 0.31$); the model reads it as license to help. An explicit prompt naming the intent
+helps but does not close the gap ($0.81$). Steering the represented direction recovers more than the explicit
+prompt ($0.94$), and the two stack to full honoring ($1.00$). Prompting alone leaves a residual discard that
+routing removes: the represented direction carries honoring the instruction does not fully elicit.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lc}
+\toprule
+condition & recognize honored ($/16$) \\
+\midrule
+default (no prompt) & 0.62 \\
+mild nudge & 0.31 \\
+explicit intent prompt & 0.81 \\
+steer (no prompt) & 0.94 \\
+explicit prompt $+$ steer & \textbf{1.00} \\
+\bottomrule
+\end{tabular}
+\caption{Prompting vs routing on Qwen2.5-3B. Naming the intent in a prompt helps but leaves a residual discard;
+steering recovers more and stacks with the prompt. A vague nudge backfires.}
+\label{tab:prompt}
+\end{table}
+
+\section{Naturalistic Transfer}
+\label{sec:natural}
+The stimuli so far are synthetic and surface-matched, which a reader may suspect drives the effect. We test
+whether the probe and the steering direction, both fit only on the templates, transfer to hand-written,
+non-templated messages (varied length, register, and topic; e.g.\ ``just got back from my first 5k, didn't
+stop once'' or ``six months sober today, wanted to tell someone''). The template-trained probe classifies the
+intent of these unseen natural messages at $1.00$ (layer~24). The behavioral chain reproduces on natural text:
+default honoring is $0.62$ (the same discard as the templates), steering with the template-derived direction
+recovers it to $0.81$, and genuinely-evaluate natural messages correctly draw feedback ($0.08$ honoring). The
+effect is not an artifact of the controlled stimuli; a direction learned on templates governs behavior on real
+messages.
+
 \section{Limitations}
 We state these prominently because the result is easy to overread. \textbf{Scope.} Six models across four
 families (Qwen 3B/7B/14B, Mistral-7B, Phi-3.5-mini, Llama-3.1-8B); the \emph{represents} result is $n{=}120$,
@@ -312,7 +394,13 @@ intent contrasts (recognize vs evaluate, and vent vs advise; Section~\ref{sec:ax
 lexically marked; deeper intents and further open-weight families and instruction-tuning regimes are untested.
 \textbf{Specificity rests on dissociation, not a p-value.} The steering effect is large and norm-matched
 random directions do not reproduce it, but the shuffled-label permutation has a fat tail on strong axes
-(Section~\ref{sec:spec}); we lean on the difference-of-means dissociation, not a significance threshold. \textbf{Per-model steer layer.} The
+(Section~\ref{sec:spec}); we lean on the difference-of-means dissociation, not a significance threshold.
+\textbf{Alignment did not explain the discard.} We tested whether instruction tuning \emph{creates} the
+behavioral discard by comparing base and instruct checkpoints in a shared completion frame; under a strict
+critique metric both honor recognize-intent near ceiling, and an apparent base-versus-instruct gap under an
+earlier looser metric was a scoring artifact (friendly questions miscounted as feedback). We report no
+evidence that alignment installs the discard; the representation, however, is present in the base model
+(Section~\ref{sec:repr}). \textbf{Per-model steer layer.} The
 handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
 a single cherry-picked layer, but cross-validating the layer choice within each model would be cleaner.
 \textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon
