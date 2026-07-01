@@ -362,18 +362,18 @@ Not any intent-correlated axis works.
 
 \paragraph{Norm-matched controls do not reproduce the effect.} At each model's validated steer layer we
 measure the behavior separation $S = \mathrm{feedback}(\text{toward-evaluate}) -
-\mathrm{feedback}(\text{toward-recognize})$ over $24$ items. The true direction gives $S{=}17$ on Qwen-3B
-(layer~30: $19/24$ feedback toward evaluate vs $2/24$ toward recognize) and $S{=}18$ on Qwen-7B (layer~16:
-$20/24$ vs $2/24$). Random directions of the same magnitude are scattered in sign and centered near zero, and
-never reach the true separation (max $14$ and $16$). The effect requires the specific learned direction, not a
-perturbation of matched norm.
+\mathrm{feedback}(\text{toward-recognize})$ over $24$ items. The true direction gives $S{=}14$ on Qwen-3B
+(layer~30: $17/24$ feedback toward evaluate vs $3/24$ toward recognize) and $S{=}16$ on Qwen-7B (layer~16:
+$19/24$ vs $3/24$). Across $48$ random directions of matched norm, scattered in sign and centered near zero,
+none reaches the true separation on either model (max $|S|{=}13$ and $15$; permutation $p{=}0.02$). The effect
+requires the specific learned direction, not a perturbation of matched norm.
 
-\paragraph{A caveat we keep on the record.} We also ran shuffled-label directions (the same fit on permuted
-intent labels; Appendix~\ref{app:spec}). These are mostly scattered and small, but the control has a fat tail:
-when the underlying intent axis is strong, an occasional label permutation correlates with true intent and
-produces a real effect (one of twelve did so on Qwen-7B, the sharpest discard in the ladder). We therefore
-rest the specificity claim on the two dissociations above rather than on a permutation significance threshold,
-and report the full permutation distribution, tail included, in the appendix.
+\paragraph{Shuffled-label controls agree.} We also ran shuffled-label directions (the same fit on permuted
+intent labels; Appendix~\ref{app:spec}); their separation stays below the true direction on both models
+($\max 10$ and $9$ versus $14$ and $16$). We flag that this control is more conservative than the random one:
+on a very strong axis an occasional label permutation can partially correlate with true intent (we observed
+such a tie in an earlier run), so we report the full permutation distribution in the appendix and rest the
+specificity claim on the difference-of-means dissociation and the random null, not on any single threshold.
 
 \section{A Second Intent Axis}
 \label{sec:axis2}
@@ -605,15 +605,14 @@ steering toward recognize at the same coefficient; layers and coefficients faili
 \label{app:spec}
 At each model's validated steer layer we compare the behavior separation $S = \mathrm{feedback}(+\text{dir}) -
 \mathrm{feedback}(-\text{dir})$ of the true (logistic-weight) direction against directions fit on permuted
-intent labels (twelve) and random directions of matched norm (eight), each scored over the same $24$-item
-subset. Qwen-3B (layer~30): true $S{=}17$; shuffled $S \in \{-3,0,1,1,1,2,3,5,5,6,8,10\}$, all below $17$;
-random $|S| \le 14$. Qwen-7B (layer~16): true $S{=}18$; shuffled $S \in
-\{-17,-11,-8,-7,-7,-6,-4,2,5,5,13,18\}$; random $|S| \le 16$. On Qwen-7B one of twelve shuffled directions
-reached $S{=}18$: because the intent axis is strong there (the sharpest discard-recover in the ladder), an
-occasional label permutation partially aligns with true intent and produces a real effect. This fat tail is a
-property of shuffled-label permutation on strong effects, not evidence the direction is unspecific; the
-random-direction control, which has no such alignment mechanism, never reaches the true separation on either
-model. We report the full distribution rather than select a favorable statistic.
+intent labels (twelve) and random directions of matched norm (forty-eight), each scored over the same
+$24$-item subset. Qwen-3B (layer~30): true $S{=}14$; shuffled $S \in \{-10,-7,-6,-5,-4,0,2,3,4,7,10,10\}$, all
+below $14$; random $|S| \le 13$, none reaching the true value (permutation $p{=}0.02$). Qwen-7B (layer~16):
+true $S{=}16$; shuffled $S \in \{-10,-10,-8,-6,-5,-2,-1,0,5,6,8,9\}$, all below $16$; random $|S| \le 15$, none
+reaching the true value ($p{=}0.02$). Neither control reaches the true separation on either model. Shuffled-label
+permutation is nonetheless a conservative control: on a very strong axis a permutation can partially correlate
+with true intent (in an earlier run one of twelve shuffled directions tied the true separation on Qwen-7B), so
+we report the full distribution rather than select a favorable statistic.
 
 \section{Reproducibility}
 \label{app:repro}

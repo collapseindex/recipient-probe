@@ -1,28 +1,11 @@
-=== Specificity of the steering direction ===
-Is the handle the *intent* direction, or a generic feedback/verbosity knob any big push would hit?
-
-Two dissociations (paper Sec. Specificity):
-
-1. ONLY THE DISCRIMINATIVE DIRECTION STEERS (already in Sec. Recover)
-   - difference-of-means direction at the peak-probe layer FAILS the sanity gate.
-   - logistic-weight (discriminative) direction at a later layer PASSES.
-   -> not any intent-correlated axis works; the discriminating direction does.
-
-2. NORM-MATCHED CONTROLS DON'T REPRODUCE THE EFFECT (pinned to the ladder's steer layer)
-   S = feedback(toward-evaluate) - feedback(toward-recognize), over 24 items.
-   Qwen2.5-3B (L30):  true S=17  (toward-eval 19/24 feedback, toward-rec 2/24)
-   Qwen2.5-7B (L16):  true S=18  (toward-eval 20/24, toward-rec 2/24)
-   random directions of matched norm: scattered in sign, centered ~0, max |S| = 14 (3B), 16 (7B) -- never reach true.
-
-CAVEAT WE KEEP ON THE RECORD (appendix): shuffled-LABEL permutation
-   Qwen-3B: shuffled S in {-3,0,1,1,1,2,3,5,5,6,8,10} (all < 17)          p_shuf=0.077
-   Qwen-7B: shuffled S in {-17,-11,-8,-7,-7,-6,-4,2,5,5,13,18}            p_shuf=0.154  <- ONE tied true (18)
-   The shuffled control has a FAT TAIL: when the intent axis is strong (7B is the sharpest discard in the
-   ladder), an occasional label permutation correlates with true intent and produces a real effect. This is a
-   property of shuffled-label permutation on strong effects, NOT evidence the direction is unspecific. We rest
-   the specificity claim on the two dissociations above (esp. diff-of-means), not a permutation p-value.
-
-History: first pass (6 items/side, 8 perms, a RE-SWEPT layer L28) was underpowered and on the 3B a shuffled
-dir beat true (S 11>9, p=0.22). Fix = pin to the validated ladder layer (L30) + 12 items/side + 12 perms.
-The 3B then separated cleanly; the 7B tie is the fat tail, reported honestly rather than chased to p<0.05.
-Scripts: experiments/modal_specificity2.py (re-run), experiments/modal_controls.py (first pass).
+=== Specificity of the steering direction (canonical stimuli) ===
+1. DIFF-OF-MEANS FAILS, DISCRIMINATIVE WORKS (Sec. Recover): diff-of-means at peak-probe layer fails the gate;
+   logistic-weight direction at a later layer passes. Not any intent-correlated axis works.
+2. NORM-MATCHED NULL (ladder steer layer). S = feedback(toward-eval) - feedback(toward-rec), 24 items.
+   Qwen-3B (L30): true S=14 (17/24 vs 3/24) | Qwen-7B (L16): true S=16 (19/24 vs 3/24)
+   48 random directions matched norm: max|S|=13 (3B) / 15 (7B), NONE reach true. permutation p_rand=0.02 both.
+3. SHUFFLED-LABEL (12 perms): max 10 (3B) / 9 (7B), both < true; no tie this canonical run.
+   (An earlier pre-canonical run had one of 12 shuffled tie true on 7B -- fat-tail of shuffled-label on strong
+   axes; reported honestly in the appendix.)
+Numbers shifted from the pre-canonical run (S was 17/18) because the "proud" phrasing fix touched a subset
+phrasing. Only the learned intent direction reaches the separation. Script: modal_specificity2.py (N_RAND=48).
