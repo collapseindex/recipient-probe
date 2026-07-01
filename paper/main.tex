@@ -367,8 +367,20 @@ measure the behavior separation $S = \mathrm{feedback}(\text{toward-evaluate}) -
 \mathrm{feedback}(\text{toward-recognize})$ over $24$ items. The true direction gives $S{=}14$ on Qwen-3B
 (layer~30: $17/24$ feedback toward evaluate vs $3/24$ toward recognize) and $S{=}16$ on Qwen-7B (layer~16:
 $19/24$ vs $3/24$). Across $48$ random directions of matched norm, scattered in sign and centered near zero,
-none reaches the true separation on either model (max $|S|{=}13$ and $15$; permutation $p{=}0.02$). The effect
-requires the specific learned direction, not a perturbation of matched norm.
+none reaches the true separation on either model (max $|S|{=}13$ and $15$; permutation $p{=}0.02$;
+Figure~\ref{fig:specificity}). The effect requires the specific learned direction, not a perturbation of
+matched norm.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{specificity.pdf}
+\caption{\textbf{The effect requires the learned direction.} Distribution of the behavior separation
+$S = \mathrm{feedback}(\text{toward-evaluate}) - \mathrm{feedback}(\text{toward-recognize})$ for $48$ random
+directions of matched norm (gray) and $12$ shuffled-label directions (blue), against the true intent direction
+(red line). On both models the true direction sits beyond the entire control distribution; no random or
+shuffled direction reaches it (permutation $p{=}0.02$).}
+\label{fig:specificity}
+\end{figure*}
 
 \paragraph{Shuffled-label controls agree.} We also ran shuffled-label directions (the same fit on permuted
 intent labels; Appendix~\ref{app:spec}); their separation stays below the true direction on both models
@@ -424,7 +436,7 @@ two models (Qwen2.5-3B and Llama-3.1-8B) we sweep every few layers and read, at 
 is (the probe) and how much steering \emph{at that layer} recovers honoring, the latter on the full $60$-item
 recognize set with bootstrap $95\%$ CIs; on Qwen-3B we also read where the reply opener commits, via a
 logit-lens of the last-token residual through the unembedding \citep{belrose2023tunedlens}
-(Table~\ref{tab:localize}).
+(Figure~\ref{fig:localize}, Table~\ref{tab:localize}).
 
 \paragraph{Represented before routed.} On both models the probe saturates at layers where steering does
 \emph{not} yet recover honoring. On Qwen-3B the intent is decodable by mid-network (probe $1.00$ at layer~24)
@@ -436,6 +448,18 @@ diffuse than Qwen's sharp late window. The general fact is a \emph{gap}: the sen
 before it is routed into the readout, and the causal handle lives past the representation, not at it. Where
 exactly the routing happens is model-specific, consistent with the model-specific steer layer of
 Section~\ref{sec:general}. The discard is a routing gap, not a failure to represent.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{localization.pdf}
+\caption{\textbf{Represented before routed.} Per layer, how decodable the intent is (blue, probe accuracy) and
+how much steering \emph{at that layer} recovers recognize-intent honoring (red, with bootstrap $95\%$ CIs),
+against the default baseline (dotted). On both models the probe saturates at layers where steering has not yet
+lifted honoring above baseline; recovery arrives only deeper (late and sharp for Qwen-3B, earlier and more
+diffuse for Llama-8B). The gap between the blue and red onsets is the discard: the intent is represented
+before it is routed into the readout. $n{=}60$.}
+\label{fig:localize}
+\end{figure*}
 
 \paragraph{Distributed, not a single head.} The window localizes in depth but not to an atomic component.
 Ablating each late-layer attention head in turn (query-side, one at a time) does not restore honoring: the
