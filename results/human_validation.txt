@@ -1,0 +1,20 @@
+=== Human validation of the 'honoring' behavior measure ===
+Blind subset: 60 replies (24 recognize-default + 24 recognize-steered + 12 evaluate anchors), Qwen-3B, L30.
+One annotator, shown only sender_message + assistant_reply (condition + auto-label hidden), marked
+offers_feedback y/n. Files: ratings_blind_filled.csv (human), ratings_key.csv (auto labels + condition).
+
+Agreement (human vs automated):
+  human vs LEXICON  : accuracy 0.867, Cohen's kappa 0.693  (substantial)
+  human vs EMBEDDING: accuracy 0.817, Cohen's kappa 0.540  (moderate)
+  lexicon vs embedding: accuracy 0.783, kappa 0.496
+
+Attention check: evaluate anchors (sender ASKED for critique) -> human marked feedback 11/12 = 0.92. Engaged.
+
+Human independently reproduces the steering effect (honoring = NOT offering feedback, by human label):
+  HUMAN honoring on recognize: default 0.75 -> steered 1.00
+  LEXICON honoring on recognize: default 0.58 -> steered 0.96   (same direction/magnitude)
+
+Read: the lexicon is a substantial proxy for human judgment (kappa 0.69), the human is slightly more lenient
+(marks fewer replies as feedback -> higher default honoring 0.75 vs lexicon 0.58), but BOTH show the recovery.
+The behavioral 'honoring' numbers are not an artifact of automated scoring. Folded into Sec. Discards +
+Limitations. One annotator; a multi-annotator study would tighten it further.

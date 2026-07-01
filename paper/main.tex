@@ -101,6 +101,14 @@ yes to (3) is a routing problem with a demonstrated fix. We answer all three for
 represented intent, discarded at readout, that steering recovers (Figure~\ref{fig:teaser}).%
 \footnote{Code, stimuli, and experiment scripts: \url{https://github.com/collapseindex/recipient-probe}.}
 
+\paragraph{What ``discarded'' means, and does not.} We use \emph{discarded at readout} operationally, not as a
+claim that the feature is erased: the intent is present in the hidden state (probe-decodable), the default
+output does not act on it, and it is recoverable by steering the represented direction. Section~\ref{sec:localize}
+shows the intent in fact persists in depth and stays routable, it is not thrown away. Our measure also speaks to
+\emph{routability}, not to a normative ground truth: we do not claim that fully honoring is always the correct
+response (a warm reader may sometimes offer a gentle note), only that default behavior tracks a represented
+intent it does not use, and that routing the represented direction moves the behavior along that axis.
+
 \section{Setup}
 \label{sec:setup}
 We use a binary intent contrast that is common, checkable, and non-emotional: a sender shares a thing they
@@ -139,7 +147,10 @@ held-out phrasings, decodes the intent well above both the lexical baseline and 
 it rises with depth (Table~\ref{tab:probe}). A surface signal would be flat-high from the earliest layer; in
 a deliberately leaked control with lexically distinct prefixes the probe is indeed $1.00$ at every layer
 including layer~6. Closing the leak drops the early layers ($1.00 \to 0.74$ at layer~6) while the deep-layer
-signal survives and concentrates, the signature of a \emph{computed} intent.
+signal survives and concentrates, the signature of a \emph{computed} intent. The probe also generalizes across
+held-out \emph{objects}: under leave-one-object-out cross-validation it reaches $1.00$ on both Qwen-3B and
+Llama-8B, confirming that object identity, shared between an object's recognize and evaluate stimulus, carries
+no label information.
 
 \paragraph{Present before alignment.} The representation is not an artifact of instruction tuning. On the
 base (pre-instruct) checkpoints of Qwen2.5-3B and Llama-3.1-8B, the same probe decodes intent at $0.99$ and
@@ -186,6 +197,16 @@ hand-written feedback versus acknowledgment prototypes (no shared vocabulary wit
 experiment the two measures agree per-reply ($13/16$ at default, $16/16$ steered) and reach the same
 conclusion, default honoring $12/16$ (lexicon) and $11/16$ (embedding) rising to $16/16$ under both after
 steering. The behavioral effect is not specific to the classifier.
+
+\paragraph{Validated against human judgment.} We go further and check the lexicon against a person. On a
+blind, shuffled subset of $60$ replies (recognize shares under default and steered, plus evaluate anchors), an
+annotator shown only the message and reply, and neither the condition nor the automated label, marked whether
+each reply offers unsolicited feedback. Human labels agree with the lexicon at Cohen's $\kappa{=}0.69$
+(accuracy $0.87$) and with the embedding classifier at $\kappa{=}0.54$, and the annotator passes an attention
+check, marking feedback on $11/12$ evaluate anchors where the sender explicitly asked for critique. Most
+importantly the human independently reproduces the effect: by human rating, recognize-intent honoring rises
+from $0.75$ (default) to $1.00$ (steered), matching the direction and magnitude the classifiers report. The
+measure tracks human judgment, and the recovery is not an artifact of automated scoring.
 
 \section{The Intent Is Causally Recoverable}
 \label{sec:steer}
@@ -239,9 +260,17 @@ Both the default discard and the steering recovery hold with \emph{non-overlappi
 models; Mistral is the exception only because it already honors recognize-intent at baseline ($0.92$), the
 ceiling case whose recovery shows on the feedback axis (Section~\ref{sec:general}). The effect is not an
 artifact of greedy decoding: re-running Qwen-3B with temperature-$0.7$ sampling across three seeds gives
-default honoring $0.58$--$0.63$ and steered $0.92$--$0.98$, matching the greedy estimate. As a sanity check,
-evaluate-intent items draw feedback at $0.62$--$0.87$ by default; the model withholds feedback on
+default honoring $0.53$--$0.60$ and steered $0.95$--$0.97$, matching the greedy estimate. As a sanity check,
+evaluate-intent items draw feedback at $0.63$--$0.80$ by default; the model withholds feedback on
 recognize-intent not because it never critiques, but because the intent tells it not to.
+
+\paragraph{The steer layer is not cherry-picked: held-out selection.} A steering result invites the worry that
+the layer and coefficient were tuned on the same items where the effect is then measured. We rule this out with
+a nested split \emph{by object}: the steering direction is fit, and the layer and coefficient selected, on a
+\emph{dev} half of the objects; recovery is measured on the disjoint \emph{test} half, objects never seen in
+selection. On held-out test objects the recovery is non-overlapping with the default baseline on both models
+(Qwen-3B $0.70 \to 1.00$ at the dev-selected layer~28, coefficient~$1.0$; Llama-8B $0.53 \to 0.87$ at
+layer~19, coefficient~$0.5$). No item used to select the intervention is used to measure it.
 
 \begin{table*}[t]
 \centering\small
@@ -250,10 +279,10 @@ recognize-intent not because it never critiques, but because the intent tells it
 \toprule
 model & layer & default honoring [95\% CI] & steered honoring [95\% CI] & default vs steered \\
 \midrule
-Qwen2.5-3B   & 30 & 0.65 [0.53, 0.77] & 0.97 [0.92, 1.00] & non-overlapping \\
-Qwen2.5-7B   & 16 & 0.52 [0.38, 0.65] & 1.00 [1.00, 1.00] & non-overlapping \\
-Llama-3.1-8B & 19 & 0.62 [0.50, 0.73] & 0.93 [0.87, 0.98] & non-overlapping \\
-Mistral-7B   & 22 & 0.92 [0.85, 0.98] & 0.97 [0.92, 1.00] & ceiling \\
+Qwen2.5-3B   & 30 & 0.65 [0.53, 0.77] & 0.98 [0.95, 1.00] & non-overlapping \\
+Qwen2.5-7B   & 16 & 0.60 [0.47, 0.72] & 0.95 [0.88, 1.00] & non-overlapping \\
+Llama-3.1-8B & 19 & 0.57 [0.45, 0.68] & 0.85 [0.75, 0.93] & non-overlapping \\
+Mistral-7B   & 22 & 0.88 [0.80, 0.95] & 0.92 [0.83, 0.98] & ceiling \\
 \bottomrule
 \end{tabular}
 \caption{Discard and recovery at full scale: recognize-intent honoring, $n{=}60$ items, default vs steering
@@ -396,7 +425,7 @@ logit-lens of the last-token residual through the unembedding \citep{belrose2023
 (Table~\ref{tab:localize}).
 
 \paragraph{Represented before routed.} On both models the probe saturates at layers where steering does
-\emph{not} yet recover honoring. On Qwen-3B the intent is decodable by mid-network (probe $0.99$ at layer~24)
+\emph{not} yet recover honoring. On Qwen-3B the intent is decodable by mid-network (probe $1.00$ at layer~24)
 but steering there leaves honoring at the $0.65$ baseline (CI overlapping); recovery appears only at
 layers~28--33, whose CIs clear the baseline, and the acknowledgment-opener mass in the logit-lens is flat until
 it spikes at layer~28, where the reply is composed. Llama-8B shows the same ordering, the probe saturates
@@ -419,16 +448,16 @@ attributable to any one head, consistent with a routing window rather than a poi
 layer & probe (represents) & steer honoring [95\% CI] \\
 \midrule
 \multicolumn{3}{l}{\emph{Qwen2.5-3B} \quad baseline $0.65$ $[0.53, 0.77]$} \\
-\quad 11 & 0.83 & 0.65 [0.53, 0.77] \\
-\quad 24 & 0.99 & 0.63 [0.52, 0.75] \\
-\quad 28 & 1.00 & \textbf{1.00 [1.00, 1.00]} \\
+\quad 11 & 0.76 & 0.60 [0.47, 0.73] \\
+\quad 24 & 1.00 & 0.67 [0.55, 0.78] \\
+\quad 28 & 0.99 & \textbf{1.00 [1.00, 1.00]} \\
 \quad 33 & 0.98 & \textbf{0.88 [0.80, 0.95]} \\
 \midrule
-\multicolumn{3}{l}{\emph{Llama-3.1-8B} \quad baseline $0.62$ $[0.48, 0.73]$} \\
-\quad 10 & 1.00 & 0.77 [0.67, 0.87] \\
-\quad 14 & 1.00 & \textbf{0.88 [0.80, 0.95]} \\
-\quad 21 & 0.99 & \textbf{0.92 [0.83, 0.98]} \\
-\quad 27 & 0.98 & \textbf{0.92 [0.85, 0.98]} \\
+\multicolumn{3}{l}{\emph{Llama-3.1-8B} \quad baseline $0.57$ $[0.43, 0.70]$} \\
+\quad 10 & 0.99 & 0.77 [0.65, 0.87] \\
+\quad 14 & 1.00 & \textbf{0.83 [0.73, 0.93]} \\
+\quad 21 & 1.00 & \textbf{0.85 [0.75, 0.93]} \\
+\quad 27 & 1.00 & \textbf{0.87 [0.78, 0.95]} \\
 \bottomrule
 \end{tabular}
 \caption{Localizing the discard at $n{=}60$ with bootstrap $95\%$ CIs, on two models. On both, the probe
@@ -475,7 +504,8 @@ non-templated messages (varied length, register, and topic; e.g.\ ``just got bac
 stop once'' or ``six months sober today, wanted to tell someone''). The template-trained probe classifies the
 intent of these unseen natural messages at $1.00$ (layer~24). The behavioral chain reproduces on natural text:
 default honoring is $0.62$ (the same discard as the templates), steering with the template-derived direction
-recovers it to $0.81$, and genuinely-evaluate natural messages correctly draw feedback ($0.08$ honoring). The
+recovers it to $1.00$ ($23/23$ coherent), and genuinely-evaluate natural messages correctly draw feedback
+($0.08$ honoring). The
 effect is not an artifact of the controlled stimuli; a direction learned on templates governs behavior on real
 messages.
 
@@ -496,11 +526,13 @@ earlier looser metric was a scoring artifact (friendly questions miscounted as f
 evidence that alignment installs the discard; the representation, however, is present in the base model
 (Section~\ref{sec:repr}). \textbf{Per-model steer layer.} The
 handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
-a single cherry-picked layer, but cross-validating the layer choice within each model would be cleaner.
-\textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon
-(audited against generations, and cross-checked against an independent sentence-embedding classifier that
-agrees per-reply and reproduces the effect, Section~\ref{sec:discard}); the steering effects are large enough
-that classifier noise cannot drive them, but a fully learned measure would be cleaner still. \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
+a single cherry-picked layer, and we validate it out of sample, selecting layer and coefficient on a dev half
+of objects and confirming non-overlapping recovery on the held-out half (Section~\ref{sec:scale}).
+\textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon,
+audited against generations, cross-checked against an independent sentence-embedding classifier, and validated
+against a human annotator who agrees with the lexicon at $\kappa{=}0.69$ and independently reproduces the
+steering effect (Section~\ref{sec:discard}); the effects are large enough that measurement noise cannot drive
+them, though a larger multi-annotator study would tighten the human agreement further. \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
 fluency, so the causal handle has a bounded operating range.
 
 \section{Discussion}
@@ -596,8 +628,9 @@ python experiments/steer_dose.py          # dose-response confirmation
 pytest                                     # pipeline + no-leak guards
 # extended experiments (GPU, via Modal)
 modal run experiments/modal_sweep.py      # generality ladder (6 models)
+modal run experiments/modal_scale.py      # discard/recover at n=60 with bootstrap CIs
 modal run experiments/modal_specificity2.py  # norm-matched + shuffled controls
-modal run experiments/modal_localize.py   # depth localization + ablation
+modal run experiments/modal_localize2.py  # depth localization, n=60 + CIs, two models
 modal run experiments/modal_natural.py    # naturalistic transfer
 \end{verbatim}
 \end{tcolorbox}

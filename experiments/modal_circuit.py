@@ -28,7 +28,7 @@ MAXTOK = 40
 
 R_PHRASES = [
     "I've been chipping away at this for months and I'm a little nervous to show anyone.",
-    "I don't usually share what I make, but I'm kind of proud of this one.",
+    "I don't usually share what I make, but I'm proud of this one.",
     "I almost quit a few times. It's done now.",
     "I'm not looking for notes, I just wanted it to exist and to tell somebody.",
     "It's the first thing I've finished in a long time.",
@@ -46,22 +46,39 @@ E_PHRASES = [
     "I need to know if this is actually good or if I'm fooling myself.",
     "What would a skeptic say to take this apart?",
 ]
-OBJECTS = ["photo-organizing tool", "short story I wrote", "watercolor of the harbor", "model train layout",
-           "sourdough starter", "bouldering route I set", "song I recorded", "raised garden bed",
-           "budgeting spreadsheet", "birdhouse", "research poster", "knitted scarf", "chess repertoire",
-           "homemade synthesizer", "trail map", "little 2D platformer", "pour-over setup", "family recipe book",
-           "wooden chess set", "habit-tracking app", "hand-bound notebooks", "drone-footage edit", "terrarium",
-           "custom keyboard", "podcast pilot", "stop-motion short", "fermenting crock", "linocut prints",
-           "finance dashboard", "observatory mount", "interactive fiction game", "macrame hanging",
-           "weather station", "comic strip", "restored radio", "tide-prediction script", "ceramic bowls",
-           "model rocket", "flower bed", "family-history sheet", "embroidered map", "cold-brew rig"]
-SUFFIXES = ["Okay, here it is: the {o}. It works now.", "Anyway, here it is: the {o}. It's finally done.",
-            "So, here it is: the {o}. Finished it last night."]
-FEEDBACK = ["feedback", "suggest", "improve", "critique", "review", "assess", "what about", "you could",
-            "you might", "here are some", "areas", "consider", "recommend", "however", "issue", "weakness",
-            "problem", "could be", "love to see", "love to read", "happy to help", "here to help",
-            "share it", "go ahead", "potential", "notes", "tips", "advice", "refine", "polish",
-            "make sure", "one thing", "stronger", "?"]
+OBJECTS = [
+    "photo-organizing tool", "short story I wrote", "watercolor of the harbor", "model train layout",
+    "sourdough starter", "bouldering route I set", "song I recorded", "raised garden bed",
+    "budgeting spreadsheet", "birdhouse", "research poster", "knitted scarf",
+    "chess repertoire", "homemade synthesizer", "trail map", "little 2D platformer",
+    "pour-over setup", "family recipe book", "wooden chess set", "habit-tracking app",
+    "hand-bound notebooks", "drone-footage edit", "terrarium", "custom keyboard",
+    "podcast pilot", "stop-motion short", "fermenting crock", "linocut prints",
+    "finance dashboard", "observatory mount", "interactive fiction game", "macrame hanging",
+    "weather station", "comic strip", "restored radio", "tide-prediction script",
+    "ceramic bowls", "model rocket", "flower bed", "family-history sheet",
+    "embroidered map", "cold-brew rig", "marble run", "fishing lures",
+    "puppet", "finder mount", "noise enclosure", "tarot deck",
+    "leather satchel", "plant-watering system", "neighborhood zine", "lighthouse model",
+    "card game", "harmonica tabs", "pi doorbell", "carved spoons",
+    "constellation chart", "rain-barrel system", "pixel tileset", "handmade kite",
+]
+SUFFIXES = [
+    "Okay, here it is: the {o}. It works now.",
+    "Anyway, here it is: the {o}. It's finally done.",
+    "So, here it is: the {o}. Finished it last night.",
+]
+FEEDBACK = [
+    "feedback", "suggest", "improve", "critique",
+    "review", "assess", "what about", "you could",
+    "you might", "here are some", "areas", "consider",
+    "recommend", "however", "issue", "weakness",
+    "problem", "could be", "love to see", "love to read",
+    "happy to help", "here to help", "share it", "go ahead",
+    "potential", "notes", "tips", "advice",
+    "refine", "polish", "make sure", "one thing",
+    "stronger", "?",
+]
 FB_PROTO = ["Here are some suggestions to improve it.", "You could refine a few things.",
             "One issue is the pacing, consider changing it.", "Have you thought about revising the ending?",
             "I'd recommend polishing the structure and tightening it up."]
@@ -229,7 +246,7 @@ def main():
         metric = run_metric.remote()
     except Exception:
         metric = {"ERROR": traceback.format_exc()}
-    path = r"C:/Users/alexs/Desktop/recipient-probe/sweep_circuit.json"
+    path = "sweep_circuit.json"
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"circuit": circ, "metric": metric}, f, indent=1)
     print(f"WROTE {path}")
