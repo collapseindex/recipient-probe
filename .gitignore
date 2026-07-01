@@ -19,3 +19,6 @@ paper/*.fls
 paper/*.synctex.gz
 
 sweep_*.json
+
+# modal run logs
+*_run.log
