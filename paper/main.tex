@@ -68,6 +68,18 @@ hand-written natural messages using the template-derived direction, and persists
 way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
 \end{abstract}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{teaser.pdf}
+\caption{\textbf{The model represents the sender's intent, discards it at readout, and routing recovers it.}
+\textbf{(1)}~A linear probe decodes the intent (recognize vs evaluate) from the default-pass hidden state at
+$1.00$, while bag-of-words on held-out phrasings is at chance ($0.48$). \textbf{(2)}~The default reply
+nonetheless offers unsolicited feedback, honoring a recognize-intent only about $0.6$ of the time.
+\textbf{(3)}~Steering the residual stream along the represented direction at a late layer recovers honoring to
+$0.92$, unsolicited feedback collapsing and coherence preserved.}
+\label{fig:teaser}
+\end{figure*}
+
 \section{Introduction}
 A recurring failure in deployed language models is that they respond to the literal content of a message and
 miss its communicative intent, what the sender was trying to accomplish by sending it. The failure is hard to
@@ -87,7 +99,7 @@ sender's intent at all? \textbf{(2) Readout}: if it does, does the default outpu
 Recovery}: if the intent is represented but discarded, can routing recover it? The three answers imply very
 different pictures. A no to (1) is a capability problem. A yes to (1) and no to (2) is a routing problem. A
 yes to (3) is a routing problem with a demonstrated fix. We answer all three for one clean case, and find a
-represented intent, discarded at readout, that steering recovers.
+represented intent, discarded at readout, that steering recovers (Figure~\ref{fig:teaser}).
 
 \section{Setup}
 \label{sec:setup}
