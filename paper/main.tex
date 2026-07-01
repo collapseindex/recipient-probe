@@ -29,7 +29,7 @@
   before skip=3pt, after skip=3pt}}
 \newtcolorbox{promptbox}[1][]{graybox, fontupper=\footnotesize\ttfamily, title={#1}}
 
-\title{They Know But They Don't Say:\\ Language Models Represent Sender Intent They Discard at Readout}
+\title{They Infer What You Meant:\\ Language Models Represent Communicative Intent Before Their Readout Acts On It}
 
 \author{
   Alex Kwon \\
@@ -51,32 +51,33 @@
 \maketitle
 
 \begin{abstract}
-When a person shares something with a language model, the model tends to answer the \emph{surface} of the
-message and miss what the person was \emph{doing} by sending it: share a finished project and it critiques the
-code; share a raw late-night line and it runs a wellness check. We ask three questions in turn. Is the sender's
-intent \emph{represented} by the model? Is it \emph{discarded} at readout? Is it \emph{causally recoverable}?
-For a controlled recognize-versus-evaluate contrast, the answers are yes, yes, and yes. A linear probe decodes
-the intent from a 3B model's default-pass hidden states at $1.00$ accuracy, under leave-one-phrasing-out
-cross-validation where a bag-of-words baseline is at chance ($0.48$). Yet the default output honors that intent
-only about $0.6$ of the time. Steering the residual stream along the probe direction recovers the discarded
-behavior with a monotone dose-response. The representation holds across six models and four families
-(probe $1.00$); the readout discard, though, is model-specific: on three of the six the discard is real and
-the recovery is non-overlapping at $n{=}60$, while the other three already honor the intent at baseline. The steering handle is specific to the learned direction, norm-matched random
-directions do not reproduce it, and the pattern recurs on a second intent axis. The discard localizes in depth: the
-intent is represented before it is routed into the readout. It survives on hand-written natural messages, and
-persists under explicit prompting in a way routing removes. We name the controls, and the honest nulls, that
-make each link trustworthy.
+When a person shares something with a language model, the model often answers the \emph{surface} of the
+message and misses what the sender was \emph{doing} by sending it: share a finished project and it critiques
+the code; share a raw late-night line and it runs a wellness check. We show this is a readout failure on top of a robust
+representation. A linear probe decodes the sender's intent, whether they want a thing \emph{recognized} or
+\emph{evaluated}, from a model's default-pass hidden states at $1.00$ accuracy under leave-one-phrasing-out
+cross-validation, with a bag-of-words baseline at chance ($0.48$). The intent is represented, rises with depth,
+is present in the base model, and holds across six models and four families. It holds even when the intent is
+never stated but \emph{inferred} from context (birthday-gift versus portfolio framing): the probe decodes
+inferred intent at ${\sim}0.9$, and a valence control shows it reads intent, not warmth, the intent probe
+transfers across the valence split and the two directions are near-orthogonal. The default output often does
+not act on it, and this discard is bounded and \emph{capability-correlated}: clear on three smaller models,
+absent on three that honor the intent at baseline, receding at 32B. Where the discard is present, the
+represented direction is a causal handle: steering recovers honoring with a dose-response, matching and
+stacking with an explicit prompt. The readout \emph{lags} the representation, in depth within a model and in
+capability across models, and closes as models improve. We name the controls, and the honest nulls, throughout.
 \end{abstract}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{teaser.pdf}
-\caption{\textbf{The model represents the sender's intent, discards it at readout, and routing recovers it.}
-\textbf{(1)}~A linear probe decodes the intent (recognize vs evaluate) from the default-pass hidden state at
-$1.00$, while bag-of-words on held-out phrasings is at chance ($0.48$). \textbf{(2)}~The default reply
-nonetheless offers unsolicited feedback, honoring a recognize-intent only about $0.6$ of the time.
-\textbf{(3)}~Steering the residual stream along the represented direction at a late layer recovers honoring to
-$0.92$, unsolicited feedback collapsing and coherence preserved.}
+\caption{\textbf{The represent-then-lagging-readout chain, exemplified on Qwen-3B (a model where the readout
+gap is open).} \textbf{(1)}~A linear probe decodes the intent (recognize vs evaluate) from the default-pass
+hidden state at $1.00$, while bag-of-words on held-out phrasings is at chance ($0.48$). \textbf{(2)}~The
+default reply nonetheless offers unsolicited feedback, honoring a recognize-intent only about $0.65$ of the
+time. \textbf{(3)}~Steering the residual stream along the represented direction at a late layer recovers
+honoring to $0.98$, unsolicited feedback collapsing and coherence preserved. The representation is universal;
+whether the readout acts on it is model-specific (Section~\ref{sec:scale}).}
 \label{fig:teaser}
 \end{figure*}
 
@@ -94,12 +95,18 @@ was \emph{meant}, not only what was said. A related, better-studied failure of i
 \citep{sharma2023sycophancy}; ours is complementary, the default readout overrides the sender's \emph{goal},
 not their stated belief.
 
-We decompose the gap into three empirical questions. \textbf{(1) Representation}: does the model form the
-sender's intent at all? \textbf{(2) Readout}: if it does, does the default output act on it? \textbf{(3)
-Recovery}: if the intent is represented but discarded, can routing recover it? The three answers imply very
-different pictures. A no to (1) is a capability problem. A yes to (1) and no to (2) is a routing problem. A
-yes to (3) is a routing problem with a demonstrated fix. We answer all three for one clean case, and find a
-represented intent, discarded at readout, that steering recovers (Figure~\ref{fig:teaser}).%
+Our finding is that the intent is robustly \emph{represented} and that the failure is one of \emph{readout}. A
+linear probe reads the sender's intent out of the default-pass hidden state cleanly (Figure~\ref{fig:teaser}),
+and it does so even when the intent is never stated and must be \emph{inferred} from context, so the model
+performs the pragmatic inference internally. What varies is whether the readout acts on it, and it varies
+systematically. The readout \emph{lags} the representation along two axes. \textbf{In depth}, within a model,
+the intent is decodable several layers before the layer at which it drives the output. \textbf{In capability},
+across models, the intent is represented everywhere, but the behavioral failure appears only in less capable
+models and is absent in more capable ones that already act on it. Both gaps close, in depth toward the output
+layers and in capability toward larger models, and where a gap is open the represented direction is a causal
+handle for closing it: steering it recovers the behavior, as well as an explicit instruction does and with no
+prompt at all. This reframes a class of ``the model does not get it'' complaints: the model does get it;
+whether it shows depends on how far its readout has caught up with what it already encodes.%
 \footnote{Code, stimuli, and experiment scripts: \url{https://github.com/collapseindex/recipient-probe}.}
 
 \paragraph{What ``discarded'' means, and does not.} We use \emph{discarded at readout} operationally, not as a
@@ -177,6 +184,40 @@ layer & probe acc & shuffled-max & $>$ BoW ($0.48$)? \\
 layer, rises with depth.}
 \label{tab:probe}
 \end{table}
+
+\section{The Intent Is Inferred, Not Just Stated}
+\label{sec:inferred}
+In the stimuli so far the intent is \emph{stated} in the prefix (``I'd rather hear the flaws''), so a probe
+that decodes it could be reading a declared preference rather than a pragmatic inference. We test the harder
+case: the intent is never stated and must be \emph{inferred} from context. The sender shares the same object
+under one of two implicit frames, a personal context that implies they want it appreciated (``it's a birthday
+present for my mom'') or a stakes context that implies they want it scrutinized (``it's going in my
+portfolio''), with no word naming the preference. The suffix is surface-matched as before, so a probe that
+separates the two reads the inferred intent, not the frame.
+
+\paragraph{Inferred intent is represented.} A probe decodes the inferred intent from default-pass hidden
+states at $0.87$--$0.95$ across the six models and at $0.93$ on Qwen-32B, above a bag-of-words baseline
+($0.65$). A probe trained only on the \emph{stated}-intent templates transfers to hand-written, non-templated
+messages that carry no explicit marker (``six months sober today, wanted to tell someone'') at $1.00$
+(Section~\ref{sec:natural}). The model performs the pragmatic inference internally.
+
+\paragraph{It reads intent, not warmth.} The implicit frames carry valence (a birthday gift is warm, a
+portfolio is not), which the elevated bag-of-words baseline confirms is lexically marked, so we rule out that
+the probe decodes warmth rather than intent. We cross intent with valence into four cells, intent always
+inferred: warm/recognize, warm/evaluate, neutral/recognize, neutral/evaluate. The disentanglement evidence is
+\emph{transfer}: an intent probe trained on the \emph{warm} cells decodes intent on the held-out \emph{neutral}
+cells at $0.63$--$0.83$ (and neutral-to-warm at $0.75$--$0.80$), and the intent direction is near-orthogonal to
+the valence direction (cosine $0.08$--$0.16$); within each valence cell intent is perfectly decodable ($1.00$),
+supporting texture rather than the headline. Intent and warmth are distinct axes and the probe reads intent.
+As with the steer layer, the exact geometry is model-specific, transfer is cleaner on Qwen-3B ($0.83$) than
+Llama-8B ($0.63$), so the representation is universal while its precise direction shifts with context.
+
+\paragraph{Caveat.} This axis is more lexically marked than the surface-matched explicit one (bag-of-words
+$0.65$ versus $0.48$); we present it as the Gricean extension of the clean explicit result, carrying that
+caveat, as with the vent-versus-solve axis (Section~\ref{sec:axis2}). The behavioral discard on inferred intent
+is weaker and more model-specific than on stated intent, the personal frames themselves pull for
+acknowledgment, so the contribution here is that inferred intent is \emph{represented}, not a second
+behavioral demonstration.
 
 \section{The Intent Is Discarded}
 \label{sec:discard}
