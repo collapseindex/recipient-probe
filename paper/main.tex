@@ -13,6 +13,8 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{graphicx}
+\graphicspath{{figures/}{../figures/}{./}}
 \usepackage{xcolor}
 \usepackage{xspace}
 \usepackage{fontawesome5}
@@ -32,35 +34,38 @@
 \author{
   Alex Kwon \\
   Independent Researcher \\
-  \texttt{ask@collapseindex.org}
+  \texttt{ask@collapseindex.org} \\[4pt]
+  \href{https://github.com/collapseindex/recipient-probe}{\faGithub~GitHub}
 }
+
+% Let floats pack more densely (many tables; avoids orphaned single-table pages).
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{4}
+\setcounter{totalnumber}{6}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.7}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
 When a person shares something with a language model, the model tends to answer the \emph{surface} of the
-message and miss what the person was \emph{doing} by sending it: share a finished project and it critiques
-the code; share a raw late-night line and it runs a wellness check. We ask three questions in sequence. Is
-the sender's intent \emph{represented} by the model, is it \emph{discarded} at readout, and if so is it
-\emph{causally recoverable}? For one controlled case the answers are yes, yes, and yes. A linear probe
-decodes the sender's intent, whether the sender wants the thing \emph{recognized} or \emph{evaluated}, from a
-3B model's default-pass hidden states at up to $1.00$ accuracy, under leave-one-phrasing-out cross-validation
-that tests only on wordings the probe never saw, while a bag-of-words baseline on the same held-out phrasings
-is at chance ($0.48$); decodability rises with depth, the signature of an integrated representation. The
-model's default output nonetheless honors that intent only about $0.6$ of the time. And steering the residual
-stream along the late-layer probe direction recovers the discarded behavior with a clean monotone
-dose-response: recognize-intent honoring rises $0.67 \to 0.92$ while unsolicited feedback collapses from
-$15/24$ to $1/24$, coherence preserved. The model represents the sender's intent, discards it at readout, and
-routing the direction it already encodes makes it honor it. The chain holds across six models spanning a
-$4\times$ size range and four architecture families (the representation decodes at $1.00$ everywhere, and the
-steering handle, at a model-specific layer, recovers the discard in each). The handle is specific to the
-learned intent direction, norm-matched random directions do not reproduce the steering effect, and the chain
-replicates on a second intent axis (vent versus advise). The discard localizes in depth (represented by the
-mid layers, routed only at the late layers where the reply is composed), survives on hand-written natural
-messages using the template-derived direction, and persists under explicit prompting in a way routing removes.
-We are deliberate about the remaining scope, behavioral counts of $n{=}12$ per model, and name the controls
-that make each link trustworthy.
+message and miss what the person was \emph{doing} by sending it: share a finished project and it critiques the
+code; share a raw late-night line and it runs a wellness check. We ask, in sequence, whether the sender's
+intent is \emph{represented} by the model, \emph{discarded} at readout, and \emph{causally recoverable}. For a
+controlled recognize-versus-evaluate contrast the answers are yes, yes, and yes. A linear probe decodes the
+intent from a 3B model's default-pass hidden states at up to $1.00$ accuracy under leave-one-phrasing-out
+cross-validation, where a bag-of-words baseline on the same held-out wordings is at chance ($0.48$); the signal
+rises with depth. The default output nonetheless honors the intent only about $0.6$ of the time, and steering
+the residual stream along the probe direction recovers the discarded behavior with a monotone dose-response
+($0.67 \to 0.92$ honoring, coherence preserved). The chain holds across six models and four architecture
+families; the steering handle is specific to the learned direction (norm-matched random directions do not
+reproduce it) and replicates on a second intent axis (vent versus advise). The discard localizes in depth,
+represented by the mid layers but routed only at the late layers where the reply is composed; it survives on
+hand-written natural messages using the template-derived direction, and persists under explicit prompting in a
+way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
 \end{abstract}
 
 \section{Introduction}
@@ -71,7 +76,11 @@ project will, by default, offer improvements; a model handed a raw expression of
 assess risk. Both responses pass a surface rubric, and both miss the person. This is the under-reaching mirror
 of failures in which models over-trust a confident surface \citep{kwon2026mc} or a surviving stale conclusion
 \citep{kwon2026reclaim}: there, the surface is believed over the substrate; here, a real signal sits under the
-surface and is never reached.
+surface and is never reached. The framing is Gricean \citep{grice1975logic}: a cooperative reader answers what
+was \emph{meant}, not only what was said. A related, better-studied failure of instruction-tuned assistants
+\citep{ouyang2022instructgpt} is sycophancy, deferring to a user's stated belief over the truth
+\citep{sharma2023sycophancy}; ours is complementary, the default readout overrides the sender's \emph{goal},
+not their stated belief.
 
 We decompose the gap into three empirical questions. \textbf{(1) Representation}: does the model form the
 sender's intent at all? \textbf{(2) Readout}: if it does, does the default output act on it? \textbf{(3)
@@ -104,7 +113,7 @@ leave-one-phrasing-out cross-validation (Section~\ref{sec:repr}).
 We run Qwen2.5-3B-Instruct on each of $n{=}120$ messages and take the hidden state at the generation-prompt
 position, the model's state immediately before it would respond. A linear classifier (standardize, PCA to
 $\le 40$ components, $\ell_2$ logistic) is trained to decode the intent from that activation
-\citep{alain2017probes}.
+\citep{alain2017probes,belinkov2022probing}.
 
 \paragraph{Controls.} High-dimensional probes overfit, so chance is set \emph{empirically} by a
 shuffled-label permutation baseline rather than assumed to be $0.50$. Generalization is tested with
@@ -169,9 +178,9 @@ steering. The behavioral effect is not specific to the classifier.
 \section{The Intent Is Causally Recoverable}
 \label{sec:steer}
 If the intent is represented and discarded, a sufficient test of ``represented but not used'' is whether
-\emph{adding} the represented direction to the residual stream makes the output honor the intent. We extract
-a steering direction and add it at one decoder layer during generation, measuring whether the model's
-behavior moves along the intent axis.
+\emph{adding} the represented direction to the residual stream makes the output honor the intent
+\citep{turner2023actadd,li2023iti,rimsky2024caa,zou2023repe}. We extract a steering direction and add it at
+one decoder layer during generation, measuring whether the model's behavior moves along the intent axis.
 
 \paragraph{Finding the handle.} Difference-of-means at the peak-probe layer (24) does not steer behavior:
 the directions fail a sanity gate (steering toward evaluate must out-evaluate steering toward recognize), and
@@ -335,7 +344,8 @@ the vent intent by default and steering toward vent recovers listening (unsolici
 Represented and recoverable place the discard somewhere in the network's computation; we now read where. On
 Qwen2.5-3B we sweep every few layers and read three quantities at each: how decodable the intent is (the
 probe), how much steering \emph{at that layer} recovers honoring, and where the response opener commits (a
-logit-lens read of the last-token residual through the unembedding). Table~\ref{tab:localize} overlays them.
+logit-lens read of the last-token residual through the unembedding, \citealp{belrose2023tunedlens}).
+Table~\ref{tab:localize} overlays them.
 
 \paragraph{Known early, routed late.} The intent is decodable by mid-network (probe $0.79$ at layer~11,
 $0.99$ at layer~19, $1.00$ at layer~24), but steering recovers honoring only at late layers (layer~28 recovers
@@ -505,14 +515,23 @@ model. We report the full distribution rather than select a favorable statistic.
 
 \section{Reproducibility}
 \label{app:repro}
+\begin{tcolorbox}[graybox, breakable, title={Reproduce}]
 \begin{verbatim}
 pip install -e .
+# core chain (CPU; downloads Qwen2.5-3B-Instruct)
 python experiments/probe_intent.py        # represents (leave-phrasing-out)
 python experiments/same_model_discard.py  # discards (same model)
 python experiments/steer_probe_sweep.py   # find the causal layer
 python experiments/steer_dose.py          # dose-response confirmation
 pytest                                     # pipeline + no-leak guards
+# extended experiments (GPU, via Modal)
+modal run experiments/modal_sweep.py      # generality ladder (6 models)
+modal run experiments/modal_specificity2.py  # norm-matched + shuffled controls
+modal run experiments/modal_localize.py   # depth localization + ablation
+modal run experiments/modal_natural.py    # naturalistic transfer
 \end{verbatim}
-The probe is CPU-only and downloads Qwen2.5-3B-Instruct; the behavioral elicitation uses API keys.
+\end{tcolorbox}
+The core probe is CPU-only and downloads Qwen2.5-3B-Instruct; the extended experiments run on a single
+A100 through Modal, and the behavioral elicitation uses API keys.
 
 \end{document}
