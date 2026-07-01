@@ -15,7 +15,8 @@ image = (modal.Image.debian_slim(python_version="3.11")
 cache = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
 MODEL_LAYER = {"Qwen/Qwen2.5-3B-Instruct": 30, "Qwen/Qwen2.5-7B-Instruct": 16,
-               "mistralai/Mistral-7B-Instruct-v0.3": 22, "NousResearch/Meta-Llama-3.1-8B-Instruct": 19}
+               "Qwen/Qwen2.5-14B-Instruct": 41, "mistralai/Mistral-7B-Instruct-v0.3": 22,
+               "microsoft/Phi-3.5-mini-instruct": 22, "NousResearch/Meta-Llama-3.1-8B-Instruct": 19}
 SAMPLED_MODEL = "Qwen/Qwen2.5-3B-Instruct"
 SEEDS = [0, 1, 2]
 MAXTOK = 40

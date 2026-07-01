@@ -59,10 +59,10 @@ For a controlled recognize-versus-evaluate contrast, the answers are yes, yes, a
 the intent from a 3B model's default-pass hidden states at $1.00$ accuracy, under leave-one-phrasing-out
 cross-validation where a bag-of-words baseline is at chance ($0.48$). Yet the default output honors that intent
 only about $0.6$ of the time. Steering the residual stream along the probe direction recovers the discarded
-behavior with a monotone dose-response ($0.67 \to 0.92$ honoring), and the discard and recovery hold at
-$n{=}60$ with bootstrap confidence intervals across four models. The chain spans six models and four
-architecture families. The steering handle is specific to the learned direction, norm-matched random
-directions do not reproduce it, and it replicates on a second intent axis. The discard localizes in depth: the
+behavior with a monotone dose-response. The representation holds across six models and four families
+(probe $1.00$); the readout discard, though, is model-specific: on three of the six the discard is real and
+the recovery is non-overlapping at $n{=}60$, while the other three already honor the intent at baseline. The steering handle is specific to the learned direction, norm-matched random
+directions do not reproduce it, and the pattern recurs on a second intent axis. The discard localizes in depth: the
 intent is represented before it is routed into the readout. It survives on hand-written natural messages, and
 persists under explicit prompting in a way routing removes. We name the controls, and the honest nulls, that
 make each link trustworthy.
@@ -225,46 +225,46 @@ than the probe peak. A layer sweep with per-layer magnitude calibration finds la
 directions separate, coherence holds, and behavior moves.
 
 \paragraph{Dose-response.} At layer~30, steering along the probe direction gives a clean monotone
-dose-response (Table~\ref{tab:steer}, $n{=}24$, on a held-out slice of objects). Steering toward recognize
-lifts recognize-intent honoring $0.67 \to 0.75 \to 0.92$ as the coefficient grows, while unsolicited feedback
-collapses from $15/24$ to $1/24$; steering toward evaluate holds feedback high. The feedback axis fans out
-monotonically with dose (recognize $<$ baseline $<$ evaluate), a population-level effect, not a single number.
-Coherence holds at the effective doses and the sanity gate passes throughout; beyond coefficient $1.0$
-coherence degrades, bounding the usable range. Routing the direction the model already encodes recovers the
-behavior it discards.
+dose-response on the full $60$-item recognize set (Table~\ref{tab:steer}, bootstrap $95\%$ CIs). Steering
+toward recognize lifts honoring $0.65 \to 0.82 \to 0.98$ as the coefficient grows, with the baseline and
+full-dose intervals disjoint; unsolicited feedback correspondingly falls away. Coherence holds at the
+effective doses and the sanity gate passes throughout; beyond coefficient $1.0$ coherence degrades, bounding
+the usable range. Routing the direction the model already encodes recovers the behavior it discards.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering\small
-\setlength{\tabcolsep}{14pt}
-\begin{tabular}{lccc}
+\begin{tabular}{lc}
 \toprule
- & recognize & \multicolumn{2}{c}{feedback-offering ($/24$)} \\
-\cmidrule(lr){3-4}
-steer toward recognize & honored & rec / base / eval & coherent \\
+steer toward recognize & recognize honored [95\% CI] \\
 \midrule
-baseline ($c{=}0$) & 0.67 & 15 / 15 / 15 & 24/24 \\
-$c{=}0.5$ & 0.75 & 12 / 15 / 19 & 24/24 \\
-$c{=}1.0$ & \textbf{0.92} & \textbf{1} / 15 / 19 & 24/24 \\
+baseline ($c{=}0$) & 0.65 [0.53, 0.77] \\
+$c{=}0.5$ & 0.82 [0.72, 0.92] \\
+$c{=}1.0$ & \textbf{0.98} [0.95, 1.00] \\
 \bottomrule
 \end{tabular}
-\caption{Causal steering at layer~30 (probe-weight direction, last-position, $n{=}24$, held-out objects).
-Recognize-intent honoring climbs with dose and unsolicited feedback collapses to $1/24$; the feedback axis
-(rec $<$ base $<$ eval) widens monotonically. Coefficient $1.5$ breaks coherence ($12/24$) and is excluded.}
+\caption{Causal steering dose-response at layer~30 (probe-weight direction, last-position, $n{=}60$ recognize
+items, bootstrap $95\%$ CI). Recognize-intent honoring climbs monotonically with dose, and the baseline and
+full-dose intervals are disjoint. Coefficient $1.5$ breaks coherence and is excluded.}
 \label{tab:steer}
-\end{table*}
+\end{table}
 
 \section{Scale and Robustness}
 \label{sec:scale}
-The dose-response above is on a controlled subset; we now put the discard and recovery on firmer statistical
-footing. On the \emph{full} 60-item recognize set, across four models at their per-model steer layers, we
-measure default versus steered honoring with bootstrap $95\%$ confidence intervals (Table~\ref{tab:scale}).
-Both the default discard and the steering recovery hold with \emph{non-overlapping} intervals on three of four
-models; Mistral is the exception only because it already honors recognize-intent at baseline ($0.92$), the
-ceiling case whose recovery shows on the feedback axis (Section~\ref{sec:general}). The effect is not an
-artifact of greedy decoding: re-running Qwen-3B with temperature-$0.7$ sampling across three seeds gives
-default honoring $0.53$--$0.60$ and steered $0.95$--$0.97$, matching the greedy estimate. As a sanity check,
-evaluate-intent items draw feedback at $0.63$--$0.80$ by default; the model withholds feedback on
-recognize-intent not because it never critiques, but because the intent tells it not to.
+The dose-response above is on Qwen-3B; we now put the discard and recovery on firmer statistical footing and
+ask honestly how far they travel. On the \emph{full} 60-item recognize set, across all \emph{six} models at
+their per-model steer layers, we measure default versus steered honoring with bootstrap $95\%$ confidence
+intervals (Table~\ref{tab:scale}). The picture stratifies, and we report it as such. On three models the
+default discard is real and the steering recovery is \emph{non-overlapping} with it: Qwen-3B, Qwen-7B, and
+Llama-8B honor recognize-intent only $0.57$--$0.65$ by default and $0.85$--$0.98$ under steering, with
+disjoint intervals. The other three already honor recognize-intent at a high baseline (Qwen-14B $0.82$,
+Mistral $0.88$, Phi-3.5 $0.93$): there is little discard to recover, so steering nudges honoring up within
+overlapping intervals without degrading it. The readout discard is therefore \emph{model-specific}, present and
+strongly recoverable where the model over-produces feedback by default, near-absent where it already honors the
+intent, whereas the \emph{representation} is universal (probe $1.00$ on all six, Section~\ref{sec:general}). The
+recovery on the discard-showing models is not a greedy artifact: re-running Qwen-3B with temperature-$0.7$
+sampling across three seeds gives default honoring $0.53$--$0.60$ and steered $0.95$--$0.97$. As a sanity check,
+evaluate-intent items draw feedback at $0.63$--$0.80$ by default; a model that withholds feedback on
+recognize-intent does so because the intent tells it to, not because it never critiques.
 
 \paragraph{The steer layer is not cherry-picked: held-out selection.} A steering result invites the worry that
 the layer and coefficient were tuned on the same items where the effect is then measured. We rule this out with
@@ -281,37 +281,40 @@ layer~19, coefficient~$0.5$). No item used to select the intervention is used to
 \toprule
 model & layer & default honoring [95\% CI] & steered honoring [95\% CI] & default vs steered \\
 \midrule
+\multicolumn{5}{l}{\emph{discard present, recovery non-overlapping}} \\
 Qwen2.5-3B   & 30 & 0.65 [0.53, 0.77] & 0.98 [0.95, 1.00] & non-overlapping \\
 Qwen2.5-7B   & 16 & 0.60 [0.47, 0.72] & 0.95 [0.88, 1.00] & non-overlapping \\
 Llama-3.1-8B & 19 & 0.57 [0.45, 0.68] & 0.85 [0.75, 0.93] & non-overlapping \\
-Mistral-7B   & 22 & 0.88 [0.80, 0.95] & 0.92 [0.83, 0.98] & ceiling \\
+\midrule
+\multicolumn{5}{l}{\emph{ceiling: already honors at baseline, little to recover}} \\
+Qwen2.5-14B  & 41 & 0.82 [0.72, 0.92] & 0.90 [0.81, 0.97] & overlapping \\
+Mistral-7B   & 22 & 0.88 [0.80, 0.95] & 0.92 [0.83, 0.98] & overlapping \\
+Phi-3.5-mini & 22 & 0.93 [0.87, 0.98] & 0.96 [0.91, 1.00] & overlapping \\
 \bottomrule
 \end{tabular}
 \caption{Discard and recovery at full scale: recognize-intent honoring, $n{=}60$ items, default vs steering
-toward recognize, bootstrap $95\%$ CI over items. Non-overlapping intervals on three of four models; Mistral
-already honors at baseline (ceiling). Qwen-3B holds under sampled decoding (text).}
+toward recognize, bootstrap $95\%$ CI over items, all six models. The readout discard is model-specific: on
+three models (top) the default discard is real and the recovery is non-overlapping; the other three (bottom)
+already honor recognize-intent at a high baseline, so there is little to recover and steering nudges within
+overlapping intervals without degrading. Qwen-3B holds under sampled decoding (text).}
 \label{tab:scale}
 \end{table*}
 
 \section{Generality Across Models}
 \label{sec:general}
-We replicate the chain on five further models: Qwen2.5-7B and 14B \citep{qwen2025} (scaling),
-Mistral-7B-Instruct \citep{jiang2023mistral}, Phi-3.5-mini \citep{abdin2024phi3}, and Llama-3.1-8B-Instruct
-\citep{dubey2024llama3} (three further families), on GPU. The probe and steering procedures
-are unchanged, except that the steer layer is chosen per model by the same sweep used for the 3B
+We extend the probe and the steering sweep to five further models: Qwen2.5-7B and 14B \citep{qwen2025}
+(scaling), Mistral-7B-Instruct \citep{jiang2023mistral}, Phi-3.5-mini \citep{abdin2024phi3}, and
+Llama-3.1-8B-Instruct \citep{dubey2024llama3} (three further families), on GPU. The probe and steering
+procedures are unchanged, except that the steer layer is chosen per model by the same sweep used for the 3B
 (Section~\ref{sec:steer}).
 
-\paragraph{Representation generalizes.} Intent decodes at $1.00$ with bag-of-words at chance on all six
-models, across a $4{\times}$ size range and four architecture families (Qwen, Mistral, Phi, Llama;
-Table~\ref{tab:general}). The representation is not a small-model or single-family artifact.
-
-\paragraph{Discarding is model-specific; recovery is general.} How much a model discards by default varies
-widely: Qwen-7B almost never honors a recognize-intent share ($0.08$), while Mistral usually does ($0.75$).
-But the steering handle is present in every model, the sanity gate passes on all six, and steering toward
-recognize recovers the discarded behavior, or, where the model already honors it (Mistral), cleanly controls
-the feedback axis instead (toward-evaluate raises unsolicited feedback $10{\to}23$, toward-recognize lowers it
-$10{\to}5$). Qwen-7B is the sharpest case: it discards hardest and recovers furthest, $0.08 \to 0.92$, with
-feedback collapsing $22{\to}2$.
+\paragraph{The representation generalizes; the behavioral discard does not.} Intent decodes at probe $1.00$
+with bag-of-words at chance on all six models, across a $4{\times}$ size range and four architecture families
+(Qwen, Mistral, Phi, Llama; Table~\ref{tab:general}): the representation is not a small-model or single-family
+artifact. The behavioral discard is another matter, and we are careful to separate the two. As
+Section~\ref{sec:scale} shows at $n{=}60$, only three of the six over-produce feedback on recognize-intent by
+default and show the clean discard-then-recovery; the other three already honor the intent at baseline. So the
+strong, universal claim is the representation; the discard-and-recovery behavior is real but model-specific.
 
 \paragraph{The steer layer is model-specific.} The layer at which the handle works is \emph{not} a fixed
 fraction of depth: mid-network for the 7B and Llama-8B ($0.57$, $0.59$), late for the 14B and 3B ($0.85$,
@@ -331,22 +334,22 @@ not as an isomorphism claim.
 \begin{table*}[t]
 \centering\small
 \setlength{\tabcolsep}{14pt}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
-model & layers & probe / BoW & honored: default $\to$ steered & steer layer \\
+model & layers & probe / BoW & steer layer (depth) \\
 \midrule
-Qwen2.5-3B  & 36 & 1.00 / 0.48 & $0.67 \to 0.92$ & 30 (0.83) \\
-Qwen2.5-7B  & 28 & 1.00 / 0.46 & $0.08 \to 0.92$ & 16 (0.57) \\
-Qwen2.5-14B & 48 & 1.00 / 0.46 & $0.42 \to 0.75$ & 41 (0.85) \\
-Mistral-7B  & 32 & 1.00 / 0.46 & $0.75$ (ceiling) & 22 (0.69) \\
-Phi-3.5-mini & 32 & 1.00 / 0.46 & $0.58 \to 0.75$ & 22 (0.69) \\
-Llama-3.1-8B & 32 & 1.00 / 0.46 & $0.50 \to 0.83$ & 19 (0.59) \\
+Qwen2.5-3B  & 36 & 1.00 / 0.48 & 30 (0.83) \\
+Qwen2.5-7B  & 28 & 1.00 / 0.46 & 16 (0.57) \\
+Qwen2.5-14B & 48 & 1.00 / 0.46 & 41 (0.85) \\
+Mistral-7B  & 32 & 1.00 / 0.46 & 22 (0.69) \\
+Phi-3.5-mini & 32 & 1.00 / 0.46 & 22 (0.69) \\
+Llama-3.1-8B & 32 & 1.00 / 0.46 & 19 (0.59) \\
 \bottomrule
 \end{tabular}
-\caption{The chain across six models, four families. \emph{Represents} (probe peak / bag-of-words) holds at
-$1.00$ with BoW at chance everywhere. Default honoring of recognize-intent varies by model; steering recovers
-it (Mistral is already near ceiling, so its recovery shows on the feedback axis, see text). The steer layer,
-and its fraction of depth, is model-specific. Behavioral counts are $n{=}12$ recognize-intent items per model.}
+\caption{Representation and steer layer across six models, four families. Intent decodes at probe $1.00$ with
+bag-of-words at chance ($\le 0.48$) everywhere: the representation is not a small-model or single-family
+artifact. The steer layer, and its fraction of depth, is model-specific. The behavioral discard and recovery,
+which are model-specific, are quantified at $n{=}60$ in Table~\ref{tab:scale}.}
 \label{tab:general}
 \end{table*}
 
@@ -397,13 +400,13 @@ different intent: \emph{vent} (``I'm not looking for advice, I just need to be h
 Surface-matched stimuli are built as before (identical final disclosure; intent set by the prefix), on
 Qwen2.5-3B and Llama-3.1-8B.
 
-\paragraph{The chain holds.} Intent decodes at $1.00$ (Qwen-3B) and $0.98$ (Llama-8B) at the surface-matched
-token (\emph{represents}); both models default to solutionizing over listening, honoring the vent intent on
-only $9/12$ items and offering advice on $12/24$ (Qwen) and $8/24$ (Llama) (\emph{discards}); and steering
-toward the vent direction recovers listening, lifting vent honoring to $12/12$ on Qwen (advice $12 \to 1$) and
-$11/11$ on Llama (\emph{recovers}). Llama shows a clean two-way dose-response (advice $8 \to 15$ toward solve,
-$8 \to 6$ toward vent); on Qwen the amplify-toward-solve direction is coherence-limited (the baseline already
-solutionizes heavily), so its recovery shows on the honoring axis.
+\paragraph{The same model-specific pattern.} Intent decodes at probe $1.00$ (Qwen-3B) and $0.97$ (Llama-8B) at
+the surface-matched token (\emph{represents}, both models). The discard-and-recovery then mirrors the first
+axis, and mirrors its model-specificity. At $n{=}60$ with bootstrap CIs, Qwen-3B defaults to solutionizing,
+honoring the vent intent only $0.70$ of the time, and steering toward vent recovers listening to $0.98$ with
+non-overlapping intervals. Llama-8B already honors the vent intent at $0.88$ baseline (a ceiling, exactly as on
+the first axis), so steering only nudges it to $0.98$ within overlapping intervals. The representation holds on
+both; the clean discard-then-recovery is on the model that actually discards.
 
 \paragraph{Caveat.} This axis is more lexically marked than the first: a bag-of-words classifier reaches
 $0.79$ on the full text (versus $0.46$ on recognize-vs-evaluate), because the vent and solve prefixes differ
@@ -415,17 +418,18 @@ representation.
 \begin{table*}[t]
 \centering\small
 \setlength{\tabcolsep}{14pt}
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-model & probe / BoW & vent honored: default $\to$ steered & advice: base $\to$ toward-vent \\
+model & probe & vent honored (default) [95\% CI] & steered [95\% CI] & default vs steered \\
 \midrule
-Qwen2.5-3B   & 1.00 / 0.79 & $9/12 \to 12/12$ & $12 \to 1$ \\
-Llama-3.1-8B & 0.98 / 0.79 & $9/12 \to 11/11$ & $8 \to 6$ \\
+Qwen2.5-3B   & 1.00 & 0.70 [0.58, 0.82] & 0.98 [0.95, 1.00] & non-overlapping \\
+Llama-3.1-8B & 0.97 & 0.88 [0.80, 0.95] & 0.98 [0.95, 1.00] & ceiling \\
 \bottomrule
 \end{tabular}
-\caption{Second intent axis (vent vs solve), $n{=}12$ vent-intent items. \emph{Represents} holds (probe
-$1.00$/$0.98$), though BoW is elevated ($0.79$) because the prefixes are lexically marked; both models discard
-the vent intent by default and steering toward vent recovers listening (unsolicited advice collapses).}
+\caption{Second intent axis (vent vs solve), $n{=}60$ vent-intent items, bootstrap $95\%$ CI. \emph{Represents}
+holds on both (probe $1.00$/$0.97$); a bag-of-words baseline is elevated here ($0.79$) as the prefixes are
+lexically marked (see text). The discard-and-recovery is model-specific as on the first axis: non-overlapping
+on Qwen-3B, while Llama-8B already honors the vent intent at baseline (ceiling).}
 \label{tab:axis2}
 \end{table*}
 
@@ -536,12 +540,15 @@ effect is not an artifact of the controlled stimuli; a direction learned on temp
 messages.
 
 \section{Limitations}
-We state these prominently because the result is easy to overread. \textbf{Scope.} Six models across four
-families (Qwen 3B/7B/14B, Mistral-7B, Phi-3.5-mini, Llama-3.1-8B); the \emph{represents} result is $n{=}120$,
-the headline discard and recovery are $n{=}60$ with bootstrap CIs across four models (Section~\ref{sec:scale}),
-while the per-layer and per-axis sub-experiments remain $n{=}12$--$24$ and should be read as directional. Two
-intent contrasts (recognize vs evaluate, and vent vs advise; Section~\ref{sec:axis2}), the second more
-lexically marked; deeper intents and further open-weight families and instruction-tuning regimes are untested.
+We state these prominently because the result is easy to overread. \textbf{The discard is model-specific, and
+``six models'' is not one claim.} The \emph{representation} generalizes across all six models and four families
+(probe $1.00$, $n{=}120$). The \emph{behavioral} discard-and-recovery, measured at $n{=}60$ with bootstrap CIs,
+holds cleanly (non-overlapping) on only three of the six (Qwen-3B, Qwen-7B, Llama-3.1-8B); the other three
+already honor recognize-intent at a high baseline (Qwen-14B $0.82$, Mistral $0.88$, Phi-3.5 $0.93$) and have
+little discard to recover (Section~\ref{sec:scale}). We report this stratification rather than let a single
+model count stand in for links of different strength. Two intent contrasts (recognize vs evaluate, and vent vs
+advise; Section~\ref{sec:axis2}), the second more lexically marked and clean on Qwen-3B but at ceiling on
+Llama-8B; deeper intents and further families and instruction-tuning regimes are untested.
 \textbf{Specificity rests on dissociation, not a p-value.} The steering effect is large and norm-matched
 random directions do not reproduce it, but the shuffled-label permutation has a fat tail on strong axes
 (Section~\ref{sec:spec}); we lean on the difference-of-means dissociation, not a significance threshold.

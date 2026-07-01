@@ -1,18 +1,25 @@
-=== Scale + robustness: discard/recover at full n=60 with bootstrap 95% CIs ===
-recognize-intent honoring, default vs steering-toward-recognize, per-model steer layer, greedy, n=60 items.
+=== Scale n=60, bootstrap 95% CIs -- and the HONEST stratification of "six models" ===
+recognize-intent honoring, default vs steering-toward-recognize, per-model steer layer, greedy, MAXTOK=40, n=60.
 
-model         layer   default [95% CI]      steered [95% CI]      eval_fb(sanity)
-Qwen2.5-3B    30      0.65 [0.53, 0.77]     0.97 [0.92, 1.00]     0.80
-Qwen2.5-7B    16      0.52 [0.38, 0.65]     1.00 [1.00, 1.00]     0.87
-Llama-3.1-8B  19      0.62 [0.50, 0.73]     0.93 [0.87, 0.98]     0.65
-Mistral-7B    22      0.92 [0.85, 0.98]     0.97 [0.92, 1.00]     0.62   <- baseline ceiling
+model         layer  default [95% CI]      steered [95% CI]      verdict
+Qwen2.5-3B    30     0.65 [0.53,0.77]      0.98 [0.95,1.00]      NON-OVERLAP (discard present)
+Qwen2.5-7B    16     0.60 [0.47,0.72]      0.95 [0.88,1.00]      NON-OVERLAP
+Llama-3.1-8B  19     0.57 [0.45,0.68]      0.85 [0.75,0.93]      NON-OVERLAP
+Qwen2.5-14B   41     0.82 [0.72,0.92]      0.90 [0.81,0.97]      ceiling (little to recover)
+Mistral-7B    22     0.88 [0.80,0.95]      0.92 [0.83,0.98]      ceiling
+Phi-3.5-mini  22     0.93 [0.87,0.98]      0.96 [0.91,1.00]      ceiling
 
-- NON-OVERLAPPING default vs steered CIs on 3 of 4 models. Mistral already honors at baseline (ceiling case,
-  recovery shows on feedback axis per generality table).
-- NOT a greedy artifact: Qwen-3B sampled (temp 0.7, 3 seeds) default 0.58-0.63, steered 0.92-0.98.
-- eval-intent sanity: evaluate-intent items draw feedback 0.62-0.87 by default (model DOES critique when asked).
+KEY HONESTY POINT (addresses the "six models does more rhetorical than statistical work" critique):
+- REPRESENTS holds on all 6 (probe 1.00, BoW chance). This is the universal claim.
+- The behavioral DISCARD is MODEL-SPECIFIC: clean non-overlapping discard->recovery on 3 (Qwen-3B/7B, Llama-8B);
+  the other 3 (Qwen-14B, Mistral, Phi) already honor recognize-intent at 0.82-0.93 baseline -> little to recover.
+- The n=12 "directional" ladder numbers (14B 0.42, Phi 0.58) were NOISE; at n=60 both are ceiling. Dropped the
+  honored column from tab:general; tab:scale is the behavioral authority.
 
-Kills the "underpowered / single-run / one-model" reviewer concern. Folded into new Sec. Scale and Robustness
-(tab:scale) + Limitations softened (headline is n=60 w/ CIs; sub-experiments remain n=12-24, directional).
-Mistral-7B was NOT gated (HF token worked). Script: experiments/modal_scale.py (60 objects, returns per-item
-honoring for local bootstrap).
+DOSE (Qwen-3B, n=60, MAXTOK=40): c=0 0.65[0.53,0.77] -> c=0.5 0.82[0.72,0.92] -> c=1.0 0.98[0.95,1.00]. Monotone,
+  baseline/full-dose disjoint. Sampled (temp0.7, 3 seeds): default 0.53-0.60, steered 0.95-0.97. eval_fb 0.63-0.80.
+SECOND AXIS n=60 (vent vs solve): Qwen-3B probe 1.00, vent 0.70[0.58,0.82]->0.98 NON-OVERLAP; Llama-8B probe 0.97,
+  vent 0.88[0.80,0.95]->0.98 ceiling. Same model-specific pattern as axis 1.
+
+MAXTOK bug caught: modal_scale=40 vs modal_scale_more=45 made the same quantity disagree (0.65 vs 0.55);
+standardized to 40. Scripts: modal_scale.py (6 models), modal_scale_more.py (dose + axis2).
