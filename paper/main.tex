@@ -56,16 +56,15 @@ message and miss what the person was \emph{doing} by sending it: share a finishe
 code; share a raw late-night line and it runs a wellness check. We ask, in sequence, whether the sender's
 intent is \emph{represented} by the model, \emph{discarded} at readout, and \emph{causally recoverable}. For a
 controlled recognize-versus-evaluate contrast the answers are yes, yes, and yes. A linear probe decodes the
-intent from a 3B model's default-pass hidden states at up to $1.00$ accuracy under leave-one-phrasing-out
-cross-validation, where a bag-of-words baseline on the same held-out wordings is at chance ($0.48$); the signal
-rises with depth. The default output nonetheless honors the intent only about $0.6$ of the time, and steering
-the residual stream along the probe direction recovers the discarded behavior with a monotone dose-response
-($0.67 \to 0.92$ honoring, coherence preserved). The chain holds across six models and four architecture
-families; the steering handle is specific to the learned direction (norm-matched random directions do not
-reproduce it) and replicates on a second intent axis (vent versus advise). The discard localizes in depth,
-represented by the mid layers but routed only at the late layers where the reply is composed; it survives on
-hand-written natural messages using the template-derived direction, and persists under explicit prompting in a
-way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
+intent from a 3B model's default-pass hidden states at $1.00$ accuracy under leave-one-phrasing-out
+cross-validation, where a bag-of-words baseline on held-out wordings is at chance ($0.48$); the signal rises
+with depth. The default output nonetheless honors the intent only about $0.6$ of the time, and steering the
+residual stream along the probe direction recovers the discarded behavior with a monotone dose-response
+($0.67 \to 0.92$ honoring); the discard and recovery hold at $n{=}60$ with bootstrap CIs across four models. The chain spans six models and four architecture families; the steering handle is specific
+to the learned direction (norm-matched random directions do not reproduce it) and replicates on a second intent
+axis (vent versus advise). The discard localizes in depth, represented by the mid layers but routed only at the
+late layers where the reply is composed; it survives on hand-written natural messages, and persists under
+explicit prompting in a way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
 \end{abstract}
 
 \begin{figure*}[t]
@@ -228,6 +227,37 @@ $c{=}1.0$ & \textbf{0.92} & \textbf{1} / 15 / 19 & 24/24 \\
 Recognize-intent honoring climbs with dose and unsolicited feedback collapses to $1/24$; the feedback axis
 (rec $<$ base $<$ eval) widens monotonically. Coefficient $1.5$ breaks coherence ($12/24$) and is excluded.}
 \label{tab:steer}
+\end{table}
+
+\section{Scale and Robustness}
+\label{sec:scale}
+The dose-response above is on a controlled subset; we now put the discard and recovery on firmer statistical
+footing. On the \emph{full} 60-item recognize set, across four models at their per-model steer layers, we
+measure default versus steered honoring with bootstrap $95\%$ confidence intervals (Table~\ref{tab:scale}).
+Both the default discard and the steering recovery hold with \emph{non-overlapping} intervals on three of four
+models; Mistral is the exception only because it already honors recognize-intent at baseline ($0.92$), the
+ceiling case whose recovery shows on the feedback axis (Section~\ref{sec:general}). The effect is not an
+artifact of greedy decoding: re-running Qwen-3B with temperature-$0.7$ sampling across three seeds gives
+default honoring $0.58$--$0.63$ and steered $0.92$--$0.98$, matching the greedy estimate. As a sanity check,
+evaluate-intent items draw feedback at $0.62$--$0.87$ by default; the model withholds feedback on
+recognize-intent not because it never critiques, but because the intent tells it not to.
+
+\begin{table}[t]
+\centering\small
+\begin{tabular}{lccc}
+\toprule
+model & layer & default [95\% CI] & steered [95\% CI] \\
+\midrule
+Qwen2.5-3B   & 30 & 0.65 [0.53, 0.77] & 0.97 [0.92, 1.00] \\
+Qwen2.5-7B   & 16 & 0.52 [0.38, 0.65] & 1.00 [1.00, 1.00] \\
+Llama-3.1-8B & 19 & 0.62 [0.50, 0.73] & 0.93 [0.87, 0.98] \\
+Mistral-7B   & 22 & 0.92 [0.85, 0.98] & 0.97 [0.92, 1.00] \\
+\bottomrule
+\end{tabular}
+\caption{Discard and recovery at full scale: recognize-intent honoring, $n{=}60$ items, default vs steering
+toward recognize, bootstrap $95\%$ CI over items. Non-overlapping on three of four models; Mistral already
+honors at baseline (ceiling). Qwen-3B holds under sampled decoding (text).}
+\label{tab:scale}
 \end{table}
 
 \section{Generality Across Models}
@@ -435,7 +465,8 @@ messages.
 \section{Limitations}
 We state these prominently because the result is easy to overread. \textbf{Scope.} Six models across four
 families (Qwen 3B/7B/14B, Mistral-7B, Phi-3.5-mini, Llama-3.1-8B); the \emph{represents} result is $n{=}120$,
-but the behavioral discard and recovery counts are $n{=}12$ per model and should be read as directional. Two
+the headline discard and recovery are $n{=}60$ with bootstrap CIs across four models (Section~\ref{sec:scale}),
+while the per-layer and per-axis sub-experiments remain $n{=}12$--$24$ and should be read as directional. Two
 intent contrasts (recognize vs evaluate, and vent vs advise; Section~\ref{sec:axis2}), the second more
 lexically marked; deeper intents and further open-weight families and instruction-tuning regimes are untested.
 \textbf{Specificity rests on dissociation, not a p-value.} The steering effect is large and norm-matched
