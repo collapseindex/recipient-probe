@@ -98,7 +98,8 @@ sender's intent at all? \textbf{(2) Readout}: if it does, does the default outpu
 Recovery}: if the intent is represented but discarded, can routing recover it? The three answers imply very
 different pictures. A no to (1) is a capability problem. A yes to (1) and no to (2) is a routing problem. A
 yes to (3) is a routing problem with a demonstrated fix. We answer all three for one clean case, and find a
-represented intent, discarded at readout, that steering recovers (Figure~\ref{fig:teaser}).
+represented intent, discarded at readout, that steering recovers (Figure~\ref{fig:teaser}).%
+\footnote{Code, stimuli, and experiment scripts: \url{https://github.com/collapseindex/recipient-probe}.}
 
 \section{Setup}
 \label{sec:setup}
@@ -121,8 +122,8 @@ leave-one-phrasing-out cross-validation (Section~\ref{sec:repr}).
 
 \section{The Intent Is Represented}
 \label{sec:repr}
-We run Qwen2.5-3B-Instruct on each of $n{=}120$ messages and take the hidden state at the generation-prompt
-position, the model's state immediately before it would respond. A linear classifier (standardize, PCA to
+We run Qwen2.5-3B-Instruct \citep{qwen2025} on each of $n{=}120$ messages and take the hidden state at the
+generation-prompt position, the model's state immediately before it would respond. A linear classifier (standardize, PCA to
 $\le 40$ components, $\ell_2$ logistic) is trained to decode the intent from that activation
 \citep{alain2017probes,belinkov2022probing}.
 
@@ -242,28 +243,30 @@ default honoring $0.58$--$0.63$ and steered $0.92$--$0.98$, matching the greedy 
 evaluate-intent items draw feedback at $0.62$--$0.87$ by default; the model withholds feedback on
 recognize-intent not because it never critiques, but because the intent tells it not to.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
-\begin{tabular}{lccc}
+\setlength{\tabcolsep}{14pt}
+\begin{tabular}{lcccc}
 \toprule
-model & layer & default [95\% CI] & steered [95\% CI] \\
+model & layer & default honoring [95\% CI] & steered honoring [95\% CI] & default vs steered \\
 \midrule
-Qwen2.5-3B   & 30 & 0.65 [0.53, 0.77] & 0.97 [0.92, 1.00] \\
-Qwen2.5-7B   & 16 & 0.52 [0.38, 0.65] & 1.00 [1.00, 1.00] \\
-Llama-3.1-8B & 19 & 0.62 [0.50, 0.73] & 0.93 [0.87, 0.98] \\
-Mistral-7B   & 22 & 0.92 [0.85, 0.98] & 0.97 [0.92, 1.00] \\
+Qwen2.5-3B   & 30 & 0.65 [0.53, 0.77] & 0.97 [0.92, 1.00] & non-overlapping \\
+Qwen2.5-7B   & 16 & 0.52 [0.38, 0.65] & 1.00 [1.00, 1.00] & non-overlapping \\
+Llama-3.1-8B & 19 & 0.62 [0.50, 0.73] & 0.93 [0.87, 0.98] & non-overlapping \\
+Mistral-7B   & 22 & 0.92 [0.85, 0.98] & 0.97 [0.92, 1.00] & ceiling \\
 \bottomrule
 \end{tabular}
 \caption{Discard and recovery at full scale: recognize-intent honoring, $n{=}60$ items, default vs steering
-toward recognize, bootstrap $95\%$ CI over items. Non-overlapping on three of four models; Mistral already
-honors at baseline (ceiling). Qwen-3B holds under sampled decoding (text).}
+toward recognize, bootstrap $95\%$ CI over items. Non-overlapping intervals on three of four models; Mistral
+already honors at baseline (ceiling). Qwen-3B holds under sampled decoding (text).}
 \label{tab:scale}
-\end{table}
+\end{table*}
 
 \section{Generality Across Models}
 \label{sec:general}
-We replicate the chain on five further models: Qwen2.5-7B and 14B (scaling), Mistral-7B-Instruct,
-Phi-3.5-mini, and Llama-3.1-8B-Instruct (three further families), on GPU. The probe and steering procedures
+We replicate the chain on five further models: Qwen2.5-7B and 14B \citep{qwen2025} (scaling),
+Mistral-7B-Instruct \citep{jiang2023mistral}, Phi-3.5-mini \citep{abdin2024phi3}, and Llama-3.1-8B-Instruct
+\citep{dubey2024llama3} (three further families), on GPU. The probe and steering procedures
 are unchanged, except that the steer layer is chosen per model by the same sweep used for the 3B
 (Section~\ref{sec:steer}).
 
@@ -294,8 +297,9 @@ direction of matched norm gives partial non-specific recovery ($0.69$), so the s
 alignment, not the raw steering number. Read as suggestive that the intent axis is shared up to a linear map,
 not as an isomorphism claim.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
+\setlength{\tabcolsep}{14pt}
 \begin{tabular}{lcccc}
 \toprule
 model & layers & probe / BoW & honored: default $\to$ steered & steer layer \\
@@ -313,7 +317,7 @@ $1.00$ with BoW at chance everywhere. Default honoring of recognize-intent varie
 it (Mistral is already near ceiling, so its recovery shows on the feedback axis, see text). The steer layer,
 and its fraction of depth, is model-specific. Behavioral counts are $n{=}12$ recognize-intent items per model.}
 \label{tab:general}
-\end{table}
+\end{table*}
 
 \section{Specificity of the Direction}
 \label{sec:spec}
@@ -365,11 +369,12 @@ the surface-independence claim is weaker here than on the first axis. The value 
 discard-and-recover behavior generalizes to a second intent, not a second demonstration of surface-independent
 representation.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
+\setlength{\tabcolsep}{14pt}
 \begin{tabular}{lccc}
 \toprule
- & probe / BoW & vent honored: default $\to$ steered & advice: base $\to$ toward-vent \\
+model & probe / BoW & vent honored: default $\to$ steered & advice: base $\to$ toward-vent \\
 \midrule
 Qwen2.5-3B   & 1.00 / 0.79 & $9/12 \to 12/12$ & $12 \to 1$ \\
 Llama-3.1-8B & 0.98 / 0.79 & $9/12 \to 11/11$ & $8 \to 6$ \\
@@ -379,7 +384,7 @@ Llama-3.1-8B & 0.98 / 0.79 & $9/12 \to 11/11$ & $8 \to 6$ \\
 $1.00$/$0.98$), though BoW is elevated ($0.79$) because the prefixes are lexically marked; both models discard
 the vent intent by default and steering toward vent recovers listening (unsolicited advice collapses).}
 \label{tab:axis2}
-\end{table}
+\end{table*}
 
 \section{Localizing the Discard}
 \label{sec:localize}
@@ -597,6 +602,11 @@ modal run experiments/modal_natural.py    # naturalistic transfer
 \end{verbatim}
 \end{tcolorbox}
 The core probe is CPU-only and downloads Qwen2.5-3B-Instruct; the extended experiments run on a single
-A100 through Modal, and the behavioral elicitation uses API keys.
+A100 through Modal (\url{https://modal.com}), and the behavioral elicitation uses API keys. Code, stimuli, and
+all experiment scripts are available at \url{https://github.com/collapseindex/recipient-probe}.
+
+\paragraph{Software.} Experiments use PyTorch \citep{paszke2019pytorch}, HuggingFace Transformers
+\citep{wolf2020transformers}, scikit-learn \citep{pedregosa2011sklearn} for the probes and steering fits, and
+sentence-transformers \citep{reimers2019sbert} for the independent embedding measure (Section~\ref{sec:discard}).
 
 \end{document}
