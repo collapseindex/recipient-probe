@@ -467,8 +467,18 @@ empirical brick under a recipient-aware attention architecture; that architectur
 claim is the chain: the model knows the sender's intent, does not say it, and can be made to say it by routing
 what it already knows.
 
-\bibliography{references}
+\paragraph{What is and isn't new.} The steering technique is standard: adding a concept direction to the
+residual stream is by now a common tool \citep{turner2023actadd,li2023iti,rimsky2024caa,zou2023repe}, and
+representation engineering has used it to elicit or suppress model attributes. Our contribution is not the
+method but the \emph{object} and the \emph{decomposition}. We treat a sender's communicative intent as a
+first-class feature and ask, in sequence, whether it is represented, whether the default readout uses it, and
+whether it is causally recoverable. The three-way answer, represented yet discarded yet recoverable, is what
+turns a vague ``the model doesn't get it'' complaint into a measured routing failure with a demonstrated fix
+and a depth localization. The controls, and the nulls we report against ourselves (the alignment hypothesis,
+the single-head circuit), not a new steering trick, are the load-bearing part.
+
 \bibliographystyle{acl_natbib}
+\bibliography{references}
 
 \appendix
 \onecolumn
