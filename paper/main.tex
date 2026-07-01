@@ -158,6 +158,14 @@ with no request for evaluation (Box).
 ``I'd love to see your comic strip and offer any feedback or suggestions you might need\dots''
 \end{promptbox}
 
+\paragraph{The measure is not a lexical artifact.} Honoring is scored by a feedback-offer lexicon throughout,
+which invites the objection that the effect is an artifact of the word list. We validate it against an
+independent, judge-free measure: a sentence-embedding classifier that labels each reply by cosine to
+hand-written feedback versus acknowledgment prototypes (no shared vocabulary with the lexicon). On the recover
+experiment the two measures agree per-reply ($13/16$ at default, $16/16$ steered) and reach the same
+conclusion, default honoring $12/16$ (lexicon) and $11/16$ (embedding) rising to $16/16$ under both after
+steering. The behavioral effect is not specific to the classifier.
+
 \section{The Intent Is Causally Recoverable}
 \label{sec:steer}
 If the intent is represented and discarded, a sufficient test of ``represented but not used'' is whether
@@ -224,6 +232,16 @@ feedback collapsing $22{\to}2$.
 fraction of depth: mid-network for the 7B and Llama-8B ($0.57$, $0.59$), late for the 14B and 3B ($0.85$,
 $0.83$), and between for Phi and Mistral ($0.69$). A fixed-depth heuristic under-recovers (it limped on the
 7B until the per-model sweep located layer~16). The sweep, not a depth rule, is what finds the handle.
+
+\paragraph{The intent axis is alignable across models (exploratory).} The models do not share a hidden size,
+so a direction cannot transfer verbatim. We fit a linear map from Qwen-3B activations to Llama-8B activations
+on a train split of stimuli and transport Qwen's intent direction into Llama's space. The transported
+direction lands at cosine $0.85$ to Llama's \emph{own} intent direction, and steering Llama with it recovers
+honoring ($0.56 \to 1.00$ on held-out items). We flag this as exploratory: the map's held-out activation
+$R^2$ is negative (it aligns the intent direction, it does not reconstruct activation space), and a random
+direction of matched norm gives partial non-specific recovery ($0.69$), so the signal is the direction
+alignment, not the raw steering number. Read as suggestive that the intent axis is shared up to a linear map,
+not as an isomorphism claim.
 
 \begin{table}[t]
 \centering\small
@@ -327,6 +345,12 @@ reply is composed. The three readings agree: the sender's intent is represented 
 before the response commits, and the causal handle lives at that late composition site. The discard is not a
 failure to represent; it is a failure to route the represented intent into a readout that forms later.
 
+\paragraph{Distributed, not a single head.} The window localizes in depth but not to an atomic component.
+Ablating each late-layer attention head in turn (query-side, one at a time) does not restore honoring: the
+best single-head ablation lifts it by one item out of sixteen, and an early-layer control head ties for the
+top. The discard is a distributed late computation, recoverable by the full linear direction but not
+attributable to any one head, consistent with a routing window rather than a point.
+
 \begin{table}[t]
 \centering\small
 \begin{tabular}{lccc}
@@ -404,8 +428,9 @@ evidence that alignment installs the discard; the representation, however, is pr
 handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
 a single cherry-picked layer, but cross-validating the layer choice within each model would be cleaner.
 \textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon
-(audited against generations); the steering effects are large enough that classifier noise cannot drive them,
-but a learned measure would be cleaner. \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
+(audited against generations, and cross-checked against an independent sentence-embedding classifier that
+agrees per-reply and reproduces the effect, Section~\ref{sec:discard}); the steering effects are large enough
+that classifier noise cannot drive them, but a fully learned measure would be cleaner still. \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
 fluency, so the causal handle has a bounded operating range.
 
 \section{Discussion}

@@ -1,0 +1,29 @@
+=== Three more pushes (Qwen-3B unless noted) ===
+
+#2 METRIC HARDENING -- judge-free independent measure  [CLEAN WIN]
+  sentence-embedding classifier (cosine to feedback vs acknowledgment prototypes, no shared vocab with lexicon)
+                 lexicon_honored   embedding_honored   per-reply agreement
+  default        12/16             11/16               13/16
+  steered        16/16             16/16               16/16
+  -> two independent measures, same effect, high per-reply agreement. Kills "your classifier is a heuristic"
+     for the whole paper. Folded into Sec. Discards + Limitations. Script: modal_circuit.py (run_metric).
+
+#1 HEAD-ABLATION CIRCUIT  [HONEST NULL -- no atomic-head circuit]
+  baseline honoring 12/16. Ablate each query head one at a time at L{12(control),26,28,30,32}.
+  TOP restoring ablations: L12h11->13, L30h12->13, L32h8->13  (max +1/16, and an EARLY control head ties = noise)
+  -> the discard is NOT carried by any single head. Distributed late computation, recoverable by the full
+     linear direction (steering) but not by knocking out a component. Folded as one para in Sec. Localizing.
+     (Caveat: single-query-head zeroing is a small intervention; claim is "not single-head", not "no circuit".)
+     Script: modal_circuit.py (run_circuit).
+
+#3 CROSS-MODEL TRANSFER: Qwen-3B -> Llama-8B  [QUALIFIED POSITIVE, exploratory]
+  map held-out R2 = -0.552 (NEGATIVE -- map does NOT reconstruct activation space)
+  cos(transported dir, Llama's own intent dir) = 0.846   <- the real positive signal
+  Llama-8B recognize honoring (16 held-out items):
+     baseline 9/16=0.56 | random 11/16=0.69 | A->B transported 16/16=1.00 | B-own-dir 15/16=0.94
+  -> the intent DIRECTION is linearly alignable across architectures (cos 0.85) and transported steering
+     recovers honoring. BUT negative map R2 + non-specific random recovery (0.69) => claim is direction-
+     alignment, NOT space-isomorphism. Folded as an EXPLORATORY para in Sec. Generality with caveats explicit.
+     Script: modal_transfer.py (map fit on train objects, steering tested on held-out recognize items).
+
+Net of this batch: 1 clean win (#2), 1 honest null (#1), 1 caveated positive (#3). Paper builds clean (8 pages).
