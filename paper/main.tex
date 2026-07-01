@@ -53,18 +53,19 @@
 \begin{abstract}
 When a person shares something with a language model, the model tends to answer the \emph{surface} of the
 message and miss what the person was \emph{doing} by sending it: share a finished project and it critiques the
-code; share a raw late-night line and it runs a wellness check. We ask, in sequence, whether the sender's
-intent is \emph{represented} by the model, \emph{discarded} at readout, and \emph{causally recoverable}. For a
-controlled recognize-versus-evaluate contrast the answers are yes, yes, and yes. A linear probe decodes the
-intent from a 3B model's default-pass hidden states at $1.00$ accuracy under leave-one-phrasing-out
-cross-validation, where a bag-of-words baseline on held-out wordings is at chance ($0.48$); the signal rises
-with depth. The default output nonetheless honors the intent only about $0.6$ of the time, and steering the
-residual stream along the probe direction recovers the discarded behavior with a monotone dose-response
-($0.67 \to 0.92$ honoring); the discard and recovery hold at $n{=}60$ with bootstrap CIs across four models. The chain spans six models and four architecture families; the steering handle is specific
-to the learned direction (norm-matched random directions do not reproduce it) and replicates on a second intent
-axis (vent versus advise). The discard localizes in depth, the intent is represented before it is routed into the
-readout (with confidence intervals, on two models); it survives on hand-written natural messages, and persists
-under explicit prompting in a way routing removes. We name the controls, and the honest nulls, that make each link trustworthy.
+code; share a raw late-night line and it runs a wellness check. We ask three questions in turn. Is the sender's
+intent \emph{represented} by the model? Is it \emph{discarded} at readout? Is it \emph{causally recoverable}?
+For a controlled recognize-versus-evaluate contrast, the answers are yes, yes, and yes. A linear probe decodes
+the intent from a 3B model's default-pass hidden states at $1.00$ accuracy, under leave-one-phrasing-out
+cross-validation where a bag-of-words baseline is at chance ($0.48$). Yet the default output honors that intent
+only about $0.6$ of the time. Steering the residual stream along the probe direction recovers the discarded
+behavior with a monotone dose-response ($0.67 \to 0.92$ honoring), and the discard and recovery hold at
+$n{=}60$ with bootstrap confidence intervals across four models. The chain spans six models and four
+architecture families. The steering handle is specific to the learned direction, norm-matched random
+directions do not reproduce it, and it replicates on a second intent axis. The discard localizes in depth: the
+intent is represented before it is routed into the readout. It survives on hand-written natural messages, and
+persists under explicit prompting in a way routing removes. We name the controls, and the honest nulls, that
+make each link trustworthy.
 \end{abstract}
 
 \begin{figure*}[t]
@@ -232,8 +233,9 @@ Coherence holds at the effective doses and the sanity gate passes throughout; be
 coherence degrades, bounding the usable range. Routing the direction the model already encodes recovers the
 behavior it discards.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering\small
+\setlength{\tabcolsep}{14pt}
 \begin{tabular}{lccc}
 \toprule
  & recognize & \multicolumn{2}{c}{feedback-offering ($/24$)} \\
@@ -249,7 +251,7 @@ $c{=}1.0$ & \textbf{0.92} & \textbf{1} / 15 / 19 & 24/24 \\
 Recognize-intent honoring climbs with dose and unsolicited feedback collapses to $1/24$; the feedback axis
 (rec $<$ base $<$ eval) widens monotonically. Coefficient $1.5$ breaks coherence ($12/24$) and is excluded.}
 \label{tab:steer}
-\end{table}
+\end{table*}
 
 \section{Scale and Robustness}
 \label{sec:scale}
