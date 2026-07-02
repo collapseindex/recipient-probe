@@ -644,6 +644,7 @@ the single-head circuit), not a new steering trick, are the load-bearing part.
 \hyperref[app:probe]{\textcolor{tocblue}{\textbf{\ref*{app:probe}\hspace{1.5em}Probe and controls}}}\dotfill \textbf{\pageref*{app:probe}}\\[5pt]
 \hyperref[app:steer]{\textcolor{tocblue}{\textbf{\ref*{app:steer}\hspace{1.5em}Steering procedure}}}\dotfill \textbf{\pageref*{app:steer}}\\[5pt]
 \hyperref[app:spec]{\textcolor{tocblue}{\textbf{\ref*{app:spec}\hspace{1.5em}Specificity: permutation detail}}}\dotfill \textbf{\pageref*{app:spec}}\\[5pt]
+\hyperref[app:geometry]{\textcolor{tocblue}{\textbf{\ref*{app:geometry}\hspace{1.5em}Ceiling-model geometry (inconclusive)}}}\dotfill \textbf{\pageref*{app:geometry}}\\[5pt]
 \hyperref[app:repro]{\textcolor{tocblue}{\textbf{\ref*{app:repro}\hspace{1.5em}Reproducibility}}}\dotfill \textbf{\pageref*{app:repro}}\\[5pt]
 }
 \vspace{0.4em}
@@ -687,6 +688,23 @@ reaching the true value ($p{=}0.02$). Neither control reaches the true separatio
 permutation is nonetheless a conservative control: on a very strong axis a permutation can partially correlate
 with true intent (in an earlier run one of twelve shuffled directions tied the true separation on Qwen-7B), so
 we report the full distribution rather than select a favorable statistic.
+
+\section{Ceiling-model geometry (inconclusive)}
+\label{app:geometry}
+We asked whether the capability half of the trajectory (Section~\ref{sec:scale}) has a geometric signature: do
+the ceiling models, which honor recognize-intent by default, align their intent representation with the readout
+more than the discard models do? We pre-registered, before running, the metric $M = |\cos(\text{intent
+direction}, \text{readout direction})|$, where the intent direction is the final-layer logistic
+recognize-vs-evaluate weight and the readout direction is the fixed acknowledgment-minus-feedback opener
+unembedding difference, with the decision rule that the three ceiling models' $M$ must lie clearly above the
+three discard models'. \emph{The result does not meet the rule.} Discard models: $M \in \{0.12, 0.06, 0.07\}$;
+ceiling models: $\{0.14, 0.30, 0.00\}$. Two of three ceiling models (Mistral $0.30$, Qwen-14B $0.14$) exceed
+the discard range, but Phi-3.5 is the lowest of all six ($0.00$), so there is no clean separation; the group
+means differ ($0.15$ vs $0.08$) but the pre-registered separation criterion fails. A secondary operationalization
+(the direction separating honored from discarded default replies, computable only where both classes occur)
+gives $M \le 0.08$ throughout with no pattern. Per our pre-commitment we report the geometry as inconclusive and
+make no mechanism claim from it; the trajectory's capability half rests on the behavioral stratification and the
+depth localization alone.
 
 \section{Reproducibility}
 \label{app:repro}

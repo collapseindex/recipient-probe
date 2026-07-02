@@ -1,0 +1,20 @@
+=== Ceiling-model geometry: PRE-REGISTERED (PREREG.md 8d1de89), result INCONCLUSIVE ===
+Hypothesis: ceiling models align intent dir with readout dir MORE than discard models.
+M_primary = |cos(intent_dir_finallayer, readout_dir = unembed(ACK openers) - unembed(FB openers))|
+
+  model          tier      M_primary   M_behavioral
+  Qwen2.5-3B     discard    0.122       0.077
+  Qwen2.5-7B     discard    0.059       0.060
+  Llama-3.1-8B   discard    0.065       0.016
+  Qwen2.5-14B    ceiling    0.138       0.077
+  Mistral-7B     ceiling    0.302       n/a (only 7 discarded)
+  Phi-3.5-mini   ceiling    0.000       n/a (only 4 discarded)
+
+PRE-REGISTERED RULE: min(ceiling M) > max(discard M) for a clean confirm.
+  min(ceiling)=0.000 (Phi!) vs max(discard)=0.122 -> FAILS -> AMBIGUOUS.
+Group means differ (ceiling 0.15 > discard 0.08) but the separation criterion fails; Phi (ceiling) is the
+LOWEST of all six. Secondary (behavioral readout dir) <=0.08 throughout, no pattern.
+-> Per placement pre-commitment (committed 55a94b3 before seeing result): APPENDIX, labeled inconclusive,
+   NO mechanism claim. Trajectory's capability half rests on behavioral stratification + depth localization.
+The pre-registration prevented spinning "ceiling higher on average" into a mechanism claim while omitting Phi.
+Script: experiments/modal_geometry.py.
