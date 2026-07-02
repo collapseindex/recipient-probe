@@ -36,6 +36,13 @@ gap to steer).
   the variance, which is itself the point). Report M against this too where computable.
 - We commit to reporting EVERY operationalization we run, with no post-hoc selection of the flattering one.
 
+## Placement pre-commitment (fixed before the numbers)
+- If the result **confirms**: the geometry goes in the main text as the mechanism for the capability half of
+  the trajectory.
+- If the result is **ambiguous or disconfirms**: it goes to an appendix, labeled inconclusive, with at most a
+  one-sentence pointer from the scale section, and the trajectory's mechanism claim is NOT made. We decide this
+  now so placement cannot be tuned to the outcome.
+
 ## Caveats fixed in advance
 - The scale ladder is confounded with model family (Qwen at 3/7/14/32/72B; Llama-8B; Mistral-7B; Phi-3.5).
   Mistral-7B is at ceiling while Qwen-14B barely clears it. So the behavioral claim is stated as
