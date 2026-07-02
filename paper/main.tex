@@ -613,26 +613,54 @@ them, though a larger multi-annotator study would tighten the human agreement fu
 fluency, so the causal handle has a bounded operating range.
 
 \section{Discussion}
-For this case the interpretation gap is a readout failure, not a blindness, and the readout failure is
-fixable by routing. The model represents the sender's intent in depth and in a way that transfers across
-phrasings, its default output does not use it, and adding the represented direction back into the residual
-stream recovers the honoring behavior with a dose-response. This reframes a class of ``the model does not get
-it'' failures as routing problems with a demonstrated, not merely hypothesized, fix. It also clarifies why
-the naive fix fails: the decodable direction at the representation's peak is entangled with the discard, and
-the causal handle lives in the \emph{discriminative} direction at a model-specific layer (not the probe peak). This finding is the first
-empirical brick under a recipient-aware attention architecture; that architecture is not claimed here. The
-claim is the chain: the model knows the sender's intent, does not say it, and can be made to say it by routing
-what it already knows.
+The picture is a readout that lags a representation. The model represents the sender's communicative intent
+robustly, in depth, across phrasings, from pretraining, and even when the intent is unstated and must be
+inferred; what varies is whether the default readout acts on it. That readout lags the representation in two
+senses, in depth within a model (the intent is decodable several layers before it drives the output) and in
+capability across models (the behavioral failure is present in less capable models and absent in more capable
+ones that already act on it), and it closes toward the output layers and toward larger models. Where the gap
+is open, the represented direction is a causal handle, as good as an explicit instruction and available with
+no prompt; the naive difference-of-means direction is not, because at the representation's peak it is entangled
+with the discard, so the handle lives in the discriminative direction at a model-specific layer. This reframes
+a class of ``the model does not get it'' complaints: the model does get it, and often does infer the unstated
+part; whether it acts on it is the model-specific, capability-correlated question.
 
 \paragraph{What is and isn't new.} The steering technique is standard: adding a concept direction to the
 residual stream is by now a common tool \citep{turner2023actadd,li2023iti,rimsky2024caa,zou2023repe}, and
 representation engineering has used it to elicit or suppress model attributes. Our contribution is not the
 method but the \emph{object} and the \emph{decomposition}. We treat a sender's communicative intent as a
-first-class feature and ask, in sequence, whether it is represented, whether the default readout uses it, and
-whether it is causally recoverable. The three-way answer, represented yet discarded yet recoverable, is what
-turns a vague ``the model doesn't get it'' complaint into a measured routing failure with a demonstrated fix
-and a depth localization. The controls, and the nulls we report against ourselves (the alignment hypothesis,
-the single-head circuit), not a new steering trick, are the load-bearing part.
+first-class feature, show it is represented (including when unstated and only inferable, and distinct from the
+warmth it correlates with), and separate that from whether the readout acts on it. Recasting the gap as a
+readout that lags the representation, in depth and in capability, is what turns a vague ``the model doesn't get
+it'' complaint into a measured, localized phenomenon with a bounded behavioral footprint and a causal handle.
+The controls, and the nulls we report against ourselves (the alignment hypothesis, the single-head circuit,
+the inconclusive geometry), not a new steering trick, are the load-bearing part.
+
+\section{Conclusion}
+Language models represent a sender's communicative intent, whether they want a thing recognized or evaluated,
+in their default-pass hidden states: cleanly ($1.00$ under leave-one-phrasing-out cross-validation, bag-of-words
+at chance), from pretraining, across six models and four families, and even when the intent is never stated but
+must be inferred, where a valence control confirms the probe reads intent rather than the warmth it correlates
+with. Acting on that representation is the fragile part, and it lags in a patterned way: within a model the
+intent is decodable several layers before the readout uses it, and across models the behavioral failure is
+present in less capable models and absent in more capable ones, receding by 32B. Where the gap is open the
+represented direction is a causal handle, recovering the honored behavior with a dose-response and matching an
+explicit instruction with no prompt at all. We have tried to make the object, not any single number, the
+contribution, and to report the nulls, the model-specificity, and the one inconclusive mechanism as plainly as
+the confirmations.
+
+\section*{Ethics Statement}
+This work is diagnostic interpretability on open-weight models. The stimuli are synthetic templates and
+hand-written example messages authored by the researcher; no real user data, personal data, or human subjects
+were involved, and the single behavioral annotation (Section~\ref{sec:discard}) was performed by the author on
+model-generated replies. Activation steering is an established technique and we introduce no new capability; the
+specific direction we study (honoring a sender's intent) is benign, but the same handle could in principle be
+used to suppress \emph{useful} critique or to induce sycophantic withholding, and we are explicit that our
+``honoring'' measure is a measure of routability, not a normative claim that a model should always withhold
+feedback (a warm reader may rightly offer a gentle note). We therefore do not recommend deploying intent-steering
+as a blanket ``suppress feedback'' intervention; the intended use of the finding is understanding where models
+represent communicative intent and building more faithful, honestly-evaluated readouts on top of it. All code,
+stimuli, and pre-registration are released to support scrutiny and replication.
 
 \bibliographystyle{acl_natbib}
 \bibliography{references}
