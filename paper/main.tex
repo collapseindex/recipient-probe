@@ -539,31 +539,34 @@ and more diffuse for Llama-8B.}
 \label{tab:localize}
 \end{table}
 
-\section{Is Routing Necessary?}
+\section{The Represented Direction Is a Handle, With No Prompt}
 \label{sec:prompt}
-If the model represents the intent, perhaps simply \emph{telling} it the intent in a system prompt suffices and
-routing is unnecessary. We test recognize-intent honoring on Qwen2.5-3B under five conditions
-(Table~\ref{tab:prompt}). A mild attention nudge (``consider what this person is looking for'') makes honoring
-\emph{worse} ($0.62 \to 0.31$); the model reads it as license to help. An explicit prompt naming the intent
-helps but does not close the gap ($0.81$). Steering the represented direction recovers more than the explicit
-prompt ($0.94$), and the two stack to full honoring ($1.00$). Prompting alone leaves a residual discard that
-routing removes: the represented direction carries honoring the instruction does not fully elicit.
+If the intent is represented, one might simply \emph{tell} the model the intent in a system prompt. At $n{=}60$
+with bootstrap CIs (Table~\ref{tab:prompt}), an explicit prompt naming the intent does largely close the gap
+($0.93$), and steering the represented direction reaches $0.98$; the two intervals overlap, so we do
+\emph{not} claim routing recovers what prompting cannot. What the comparison shows is a property worth stating:
+the represented direction is a handle at least as good as the explicit instruction, obtained \emph{with no
+prompt at all}, and the two stack to full honoring ($1.00$). This matters wherever the prompt cannot be
+rewritten, inside an agent loop or behind a fixed API. And one practically memorable observation survives at
+power: a \emph{vague} nudge backfires. Telling the model to ``consider what this person is looking for''
+\emph{lowers} honoring from $0.65$ to $0.45$, it reads the instruction to attend as license to help.
 
 \begin{table}[t]
 \centering\small
 \begin{tabular}{lc}
 \toprule
-condition & recognize honored ($/16$) \\
+condition & recognize honored [95\% CI] \\
 \midrule
-default (no prompt) & 0.62 \\
-mild nudge & 0.31 \\
-explicit intent prompt & 0.81 \\
-steer (no prompt) & 0.94 \\
-explicit prompt $+$ steer & \textbf{1.00} \\
+default (no prompt) & 0.65 [0.53, 0.77] \\
+mild nudge & 0.45 [0.33, 0.58] \\
+explicit intent prompt & 0.93 [0.87, 0.98] \\
+steer (no prompt) & 0.98 [0.95, 1.00] \\
+explicit prompt $+$ steer & \textbf{1.00} [1.00, 1.00] \\
 \bottomrule
 \end{tabular}
-\caption{Prompting vs routing on Qwen2.5-3B. Naming the intent in a prompt helps but leaves a residual discard;
-steering recovers more and stacks with the prompt. A vague nudge backfires.}
+\caption{Prompting vs routing on Qwen2.5-3B, $n{=}60$, bootstrap $95\%$ CI. An explicit prompt ($0.93$) and
+steering ($0.98$) are interchangeable (overlapping intervals) and stack ($1.00$): the represented direction is
+a handle as good as the instruction, with no prompt. A vague nudge backfires ($0.65 \to 0.45$).}
 \label{tab:prompt}
 \end{table}
 
