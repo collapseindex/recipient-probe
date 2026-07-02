@@ -53,19 +53,18 @@
 \begin{abstract}
 When a person shares something with a language model, the model often answers the \emph{surface} of the
 message and misses what the sender was \emph{doing} by sending it: share a finished project and it critiques
-the code; share a raw late-night line and it runs a wellness check. We show this is a readout failure on top of a robust
-representation. A linear probe decodes the sender's intent, whether they want a thing \emph{recognized} or
-\emph{evaluated}, from a model's default-pass hidden states at $1.00$ accuracy under leave-one-phrasing-out
-cross-validation, with a bag-of-words baseline at chance ($0.48$). The intent is represented, rises with depth,
-is present in the base model, and holds across six models and four families. It holds even when the intent is
-never stated but \emph{inferred} from context (birthday-gift versus portfolio framing): the probe decodes
-inferred intent at ${\sim}0.9$, and a valence control shows it reads intent, not warmth, the intent probe
-transfers across the valence split and the two directions are near-orthogonal. The default output often does
-not act on it, and this discard is bounded and \emph{capability-correlated}: clear on three smaller models,
-absent on three that honor the intent at baseline, receding at 32B. Where the discard is present, the
-represented direction is a causal handle: steering recovers honoring with a dose-response, matching and
-stacking with an explicit prompt. The readout \emph{lags} the representation, in depth within a model and in
-capability across models, and closes as models improve. We name the controls, and the honest nulls, throughout.
+the code; share a raw late-night line and it runs a wellness check. We treat the sender's communicative intent,
+the Gricean \emph{what-was-meant}, as a first-class object of interpretability study, and show the failure is
+one of readout on top of a robust representation. A linear probe decodes the sender's intent, whether they
+want a thing \emph{recognized} or \emph{evaluated}, from a model's default-pass hidden states, cleanly and
+surface-independently, across six models and four families, in the base model, and even when the intent is
+never stated but must be pragmatically \emph{inferred} from context. What varies is whether the default output
+acts on it. The readout \emph{lags} the representation, within a model (the intent is decodable several layers
+before it drives the output) and across models (the behavioral failure appears in less capable models and is
+absent in more capable ones), and where the gap is open the represented direction is a causal handle: steering
+it recovers the intended behavior, as well as an explicit instruction does and with no prompt at all. We
+support each link with controls against the obvious deflations and report the nulls as plainly as the
+confirmations.
 \end{abstract}
 
 \begin{figure*}[t]
@@ -86,10 +85,7 @@ A recurring failure in deployed language models is that they respond to the lite
 miss its communicative intent, what the sender was trying to accomplish by sending it. The failure is hard to
 see because the responses are fluent and often look caring: a model handed a person's first finished creative
 project will, by default, offer improvements; a model handed a raw expression of exhaustion will, by default,
-assess risk. Both responses pass a surface rubric, and both miss the person. This is the under-reaching mirror
-of failures in which models over-trust a confident surface \citep{kwon2026mc} or a surviving stale conclusion
-\citep{kwon2026reclaim}: there, the surface is believed over the substrate; here, a real signal sits under the
-surface and is never reached. The framing is Gricean \citep{grice1975logic}: a cooperative reader answers what
+assess risk. Both responses pass a surface rubric, and both miss the person. The framing is Gricean \citep{grice1975logic}: a cooperative reader answers what
 was \emph{meant}, not only what was said. A related, better-studied failure of instruction-tuned assistants
 \citep{ouyang2022instructgpt} is sycophancy, deferring to a user's stated belief over the truth
 \citep{sharma2023sycophancy}; ours is complementary, the default readout overrides the sender's \emph{goal},
@@ -102,20 +98,31 @@ performs the pragmatic inference internally. What varies is whether the readout 
 systematically. The readout \emph{lags} the representation along two axes. \textbf{In depth}, within a model,
 the intent is decodable several layers before the layer at which it drives the output. \textbf{In capability},
 across models, the intent is represented everywhere, but the behavioral failure appears only in less capable
-models and is absent in more capable ones that already act on it. Both gaps close, in depth toward the output
-layers and in capability toward larger models, and where a gap is open the represented direction is a causal
-handle for closing it: steering it recovers the behavior, as well as an explicit instruction does and with no
-prompt at all. This reframes a class of ``the model does not get it'' complaints: the model does get it;
+models and is absent in more capable ones that already act on it (an observed stratification, not a scaling
+law). Where a gap is open the represented direction is a causal handle for closing it: steering it recovers the
+behavior, as well as an explicit instruction does and with no prompt at all. This reframes a class of ``the model does not get it'' complaints: the model does get it;
 whether it shows depends on how far its readout has caught up with what it already encodes.%
 \footnote{Code, stimuli, and experiment scripts: \url{https://github.com/collapseindex/recipient-probe}.}
 
+\paragraph{Contributions.} The steering machinery here is standard; the object and the decomposition are not.
+(i)~We treat a sender's \emph{communicative intent}, what they were doing by sending a message, as a
+first-class interpretability feature, to our knowledge its first mechanistic treatment: prior probing targets
+what models know or what users state or believe, not what a sender is trying to accomplish.
+(ii)~We show the intent is represented robustly, surface-independently, from pretraining, across six models
+and four families, and even when it is never stated and must be pragmatically inferred, where a valence
+control confirms the probe reads intent rather than warmth (Sections~\ref{sec:repr}--\ref{sec:inferred}).
+(iii)~We separate representation from readout, and show the readout \emph{lags}: in depth within a model
+(Section~\ref{sec:localize}) and in capability across models (Section~\ref{sec:scale}), with the represented
+direction a causal handle wherever the gap is open (Section~\ref{sec:steer}).
+(iv)~We report the controls and the nulls, an inconclusive pre-registered mechanism test among them, as
+plainly as the confirmations.
+
 \paragraph{What ``discarded'' means, and does not.} We use \emph{discarded at readout} operationally, not as a
-claim that the feature is erased: the intent is present in the hidden state (probe-decodable), the default
-output does not act on it, and it is recoverable by steering the represented direction. Section~\ref{sec:localize}
-shows the intent in fact persists in depth and stays routable, it is not thrown away. Our measure also speaks to
-\emph{routability}, not to a normative ground truth: we do not claim that fully honoring is always the correct
-response (a warm reader may sometimes offer a gentle note), only that default behavior tracks a represented
-intent it does not use, and that routing the represented direction moves the behavior along that axis.
+claim the feature is erased: the intent is probe-decodable, the default output does not act on it, and steering
+the represented direction recovers it (it persists in depth and stays routable, Section~\ref{sec:localize}).
+The measure speaks to \emph{routability}, not a normative ground truth: we do not claim fully honoring is always
+correct (a warm reader may offer a gentle note), only that default behavior tracks a represented intent it does
+not use.
 
 \section{Setup}
 \label{sec:setup}
@@ -164,6 +171,20 @@ no label information.
 base (pre-instruct) checkpoints of Qwen2.5-3B and Llama-3.1-8B, the same probe decodes intent at $0.99$ and
 $0.99$ (bag-of-words at chance), essentially matching their instruct versions. The feature is learned in
 pretraining; instruction tuning inherits it rather than creating it.
+
+\paragraph{Intent, not request-detection: a request-matched control.} In the surface-matched stimuli the
+evaluate prefixes carry an explicit request (``be blunt\dots'') while the recognize prefixes do not, so a probe
+could be decoding the thinner feature \emph{is a directive speech act present} rather than the sender's intent.
+We control request-presence directly: a variant set gives \emph{both} classes an explicit directive (recognize
+becomes ``please just celebrate this with me, I really don't want any notes'' against evaluate's ``be
+blunt\dots''), so only the \emph{content} of the request differs. On this request-matched set the probe still
+decodes recognize-vs-evaluate at $0.90$--$1.00$ across four models (peaks $0.97$, $0.96$, $0.97$, $1.00$ for
+Qwen-3B, Qwen-7B, Llama-8B, Phi-3.5), clearing a bag-of-words baseline of $0.69$ by roughly $0.25$--$0.30$
+everywhere. The two designs are complementary controls: the surface-matched set holds the surface identical
+(bag-of-words at chance $0.48$) but leaves request-presence confounded, and this set holds request-presence
+constant but is more lexically loaded (bag-of-words $0.69$, since one cannot ask to be celebrated without
+celebration words). The probe reaches ceiling in both, so neither a lexical shortcut nor directive-detection
+accounts for it; what is constant across the two is the intent (Appendix~\ref{app:request}).
 
 \begin{table}[t]
 \centering\small
@@ -214,7 +235,7 @@ Llama-8B ($0.63$), so the representation is universal while its precise directio
 
 \paragraph{Caveat.} This axis is more lexically marked than the surface-matched explicit one (bag-of-words
 $0.65$ versus $0.48$); we present it as the Gricean extension of the clean explicit result, carrying that
-caveat, as with the vent-versus-solve axis (Section~\ref{sec:axis2}). The behavioral discard on inferred intent
+caveat, as with the vent-versus-solve axis (Appendix~\ref{app:axis2}). The behavioral discard on inferred intent
 is weaker and more model-specific than on stated intent, the personal frames themselves pull for
 acknowledgment, so the contribution here is that inferred intent is \emph{represented}, not a second
 behavioral demonstration.
@@ -222,7 +243,7 @@ behavioral demonstration.
 \section{The Intent Is Discarded}
 \label{sec:discard}
 The representation only matters if the default output misses it. On the same model, with the intent decodable
-at $1.00$, the default response honors a \emph{recognize}-intent share only about $0.6$ of the time; on the
+at $1.00$, the default response honors a \emph{recognize}-intent share only $0.65$ of the time; on the
 rest it offers unsolicited feedback. The discard is visible in the generations on people who shared something
 with no request for evaluation (Box).
 
@@ -241,9 +262,12 @@ conclusion, default honoring $12/16$ (lexicon) and $11/16$ (embedding) rising to
 steering. The behavioral effect is not specific to the classifier.
 
 \paragraph{Validated against human judgment.} We go further and check the lexicon against a person. On a
-blind, shuffled subset of $60$ replies (recognize shares under default and steered, plus evaluate anchors), an
-annotator shown only the message and reply, and neither the condition nor the automated label, marked whether
-each reply offers unsolicited feedback. Human labels agree with the lexicon at Cohen's $\kappa{=}0.69$
+blind, shuffled subset of $60$ replies (recognize shares under default and steered, plus evaluate anchors), the
+annotator, the author, shown only the message and reply, and neither the condition nor the automated label
+(order randomized so the rating is blind to both), marked whether each reply offers unsolicited feedback. We
+disclose that this is single-author annotation, blind to condition but not independent, and treat it as a
+sanity check on the lexicon rather than an independent gold standard; an external annotator would strengthen
+it. Human labels agree with the lexicon at Cohen's $\kappa{=}0.69$
 (accuracy $0.87$) and with the embedding classifier at $\kappa{=}0.54$, and the annotator passes an attention
 check, marking feedback on $11/12$ evaluate anchors where the sender explicitly asked for critique. Most
 importantly the human independently reproduces the effect: by human rating, recognize-intent honoring rises
@@ -312,13 +336,14 @@ discard cases are the smaller, less instruction-mature models ($\le 8$B) and the
 ones ($\ge 14$B), with one telling exception: Mistral-7B sits at ceiling while the larger Qwen-14B only barely
 clears it, so we read the pattern as \emph{capability-correlated, not scale-caused}. Pushing further up, Qwen-32B
 represents the intent (probe $0.99$ stated, $0.93$ inferred) yet honors it at baseline ($0.78$ and $0.77$): the
-discard keeps receding. This is the same shape as the depth result of Section~\ref{sec:localize}, where the
-intent is represented several layers before the readout uses it. The readout lags the representation, in depth
-within a model and in capability across models, and closes toward the output layers and toward more capable
-models. We looked for a geometric signature of the closing, whether the intent direction aligns with the
-readout more in ceiling models, but the pre-registered test was inconclusive (Appendix~\ref{app:geometry}); we
-make no mechanism claim from it, and the trajectory rests on the behavioral stratification here together with
-the depth localization.
+discard, absent from 14B up, does not return at 32B. This echoes the depth result of Section~\ref{sec:localize}, where the
+intent is represented several layers before the readout uses it. Within a model the readout lags the
+representation in depth; across models we report an \emph{observed stratification}, not a scaling law: with six
+models, one of them (Mistral-7B) already breaking the size ordering, and a soft honoring threshold, we do not
+have the points to fit a curve. We looked for a geometric signature of the across-model pattern, whether the
+intent direction aligns with the readout more in ceiling models, but the pre-registered test was inconclusive
+(Appendix~\ref{app:geometry}); we make no mechanism claim from it, and the across-model claim rests on the
+behavioral stratification here together with the within-model depth localization.
 
 \paragraph{The steer layer is not cherry-picked: held-out selection.} A steering result invites the worry that
 the layer and coefficient were tuned on the same items where the effect is then measured. We rule this out with
@@ -375,22 +400,16 @@ fraction of depth: mid-network for the 7B and Llama-8B ($0.57$, $0.59$), late fo
 $0.83$), and between for Phi and Mistral ($0.69$). A fixed-depth heuristic under-recovers (it limped on the
 7B until the per-model sweep located layer~16). The sweep, not a depth rule, is what finds the handle.
 
-\paragraph{The intent axis is alignable across models (exploratory).} The models do not share a hidden size,
-so a direction cannot transfer verbatim. We fit a linear map from Qwen-3B activations to Llama-8B activations
-on a train split of stimuli and transport Qwen's intent direction into Llama's space. The transported
-direction lands at cosine $0.85$ to Llama's \emph{own} intent direction, and steering Llama with it recovers
-honoring ($0.56 \to 1.00$ on held-out items). We flag this as exploratory: the map's held-out activation
-$R^2$ is negative (it aligns the intent direction, it does not reconstruct activation space), and a random
-direction of matched norm gives partial non-specific recovery ($0.69$), so the signal is the direction
-alignment, not the raw steering number. Read as suggestive that the intent axis is shared up to a linear map,
-not as an isomorphism claim.
+\paragraph{The intent axis may be shared up to a linear map (exploratory).} A linear map fit between two
+models' activation spaces transports Qwen-3B's intent direction into Llama-8B and steers it, but the map's
+held-out reconstruction is poor and the result is only suggestive; we keep it out of the main line of argument
+and report it in Appendix~\ref{app:transport}.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering\small
-\setlength{\tabcolsep}{14pt}
 \begin{tabular}{lccc}
 \toprule
-model & layers & probe / BoW & steer layer (depth) \\
+model & layers & probe / BoW & steer (depth) \\
 \midrule
 Qwen2.5-3B  & 36 & 1.00 / 0.48 & 30 (0.83) \\
 Qwen2.5-7B  & 28 & 1.00 / 0.46 & 16 (0.57) \\
@@ -403,9 +422,11 @@ Llama-3.1-8B & 32 & 1.00 / 0.46 & 19 (0.59) \\
 \caption{Representation and steer layer across six models, four families. Intent decodes at probe $1.00$ with
 bag-of-words at chance ($\le 0.48$) everywhere: the representation is not a small-model or single-family
 artifact. The steer layer, and its fraction of depth, is model-specific. The behavioral discard and recovery,
-which are model-specific, are quantified at $n{=}60$ in Table~\ref{tab:scale}.}
+which are model-specific, are quantified at $n{=}60$ in Table~\ref{tab:scale}. A seventh model, Qwen2.5-32B,
+is run probe-and-honoring only: it represents the intent (probe $0.99$ stated, $0.93$ inferred) and honors it
+at baseline ($0.78$/$0.77$), so it has no discard to steer (Section~\ref{sec:scale}).}
 \label{tab:general}
-\end{table*}
+\end{table}
 
 \section{Specificity of the Direction}
 \label{sec:spec}
@@ -425,19 +446,8 @@ measure the behavior separation $S = \mathrm{feedback}(\text{toward-evaluate}) -
 (layer~30: $17/24$ feedback toward evaluate vs $3/24$ toward recognize) and $S{=}16$ on Qwen-7B (layer~16:
 $19/24$ vs $3/24$). Across $48$ random directions of matched norm, scattered in sign and centered near zero,
 none reaches the true separation on either model (max $|S|{=}13$ and $15$; permutation $p{=}0.02$;
-Figure~\ref{fig:specificity}). The effect requires the specific learned direction, not a perturbation of
-matched norm.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{specificity.pdf}
-\caption{\textbf{The effect requires the learned direction.} Distribution of the behavior separation
-$S = \mathrm{feedback}(\text{toward-evaluate}) - \mathrm{feedback}(\text{toward-recognize})$ for $48$ random
-directions of matched norm (gray) and $12$ shuffled-label directions (blue), against the true intent direction
-(red line). On both models the true direction sits beyond the entire control distribution; no random or
-shuffled direction reaches it (permutation $p{=}0.02$).}
-\label{fig:specificity}
-\end{figure*}
+Figure~\ref{fig:specificity} in the appendix). The effect requires the specific learned direction, not a
+perturbation of matched norm.
 
 \paragraph{Shuffled-label controls agree.} We also ran shuffled-label directions (the same fit on permuted
 intent labels; Appendix~\ref{app:spec}); their separation stays below the true direction on both models
@@ -446,46 +456,31 @@ on a very strong axis an occasional label permutation can partially correlate wi
 such a tie in an earlier run), so we report the full permutation distribution in the appendix and rest the
 specificity claim on the difference-of-means dissociation and the random null, not on any single threshold.
 
-\section{A Second Intent Axis}
-\label{sec:axis2}
-To test that the chain is not specific to the recognize-versus-evaluate contrast, we replicate it on a
-different intent: \emph{vent} (``I'm not looking for advice, I just need to be heard'') versus \emph{solve}
-(``give me concrete steps to fix this''), with behavior scored by whether the reply offers a solution.
-Surface-matched stimuli are built as before (identical final disclosure; intent set by the prefix), on
-Qwen2.5-3B and Llama-3.1-8B.
+\paragraph{Is the recovery just opener-token biasing?} A sharper deflationary reading is that late-layer
+steering does not route a represented intent at all: it simply biases the first token toward acknowledgment
+openers (``Congratulations\dots''), which is close to logit-steering and would not need any represented intent.
+We test it directly at each discard model's steer layer, generating at a longer $100$-token budget so the reply
+has a body to examine. First, the intent direction is near-orthogonal to the acknowledgment-minus-feedback
+opener-unembedding direction \emph{at the steer layer} ($|\cos|{=}0.001$, $0.03$, $0.14$ for Qwen-7B, Llama-8B,
+Qwen-3B), so the steering axis is geometrically not the opener axis. Second, on Qwen-7B, steering with the entire
+\emph{first sentence removed} swings feedback exactly as much as on the full reply
+($S_{\mathrm{rest}}{=}S{=}14$): it reorients the body of the response, not the opening move. Third, steering the
+opener-unembedding direction directly, at matched norm, fails to reproduce the recovery: it either degrades
+coherence before it honors (Qwen-7B) or leaves the behavior unmoved (Llama-8B, $S_{\mathrm{opener}}{=}1$). On
+Llama-8B the longer budget also lifts the steering separation clear of the random-direction ceiling ($S{=}7$
+versus $\max|S|{=}3$), which the shorter run left tied. We do not overclaim: on Qwen-3B the steering separation
+itself dilutes over a long generation (the model acknowledges first but drifts back into feedback, $S$ falling
+below the random ceiling), so the body test is inconclusive there and the refutation on 3B rests on the
+orthogonality and on the opener direction's incoherence, not on $S_{\mathrm{rest}}$. The opener-biasing account
+is thus refuted on the two models where steering is clean at this budget and left resting on geometry for the
+smallest (Appendix~\ref{app:opener}).
 
-\paragraph{The same model-specific pattern.} Intent decodes at probe $1.00$ (Qwen-3B) and $0.97$ (Llama-8B) at
-the surface-matched token (\emph{represents}, both models). The discard-and-recovery then mirrors the first
-axis, and mirrors its model-specificity. At $n{=}60$ with bootstrap CIs, Qwen-3B defaults to solutionizing,
-honoring the vent intent only $0.70$ of the time, and steering toward vent recovers listening to $0.98$ with
-non-overlapping intervals. Llama-8B already honors the vent intent at $0.88$ baseline (a ceiling, exactly as on
-the first axis), so steering only nudges it to $0.98$ within overlapping intervals. The representation holds on
-both; the clean discard-then-recovery is on the model that actually discards.
-
-\paragraph{Caveat.} This axis is more lexically marked than the first: a bag-of-words classifier reaches
-$0.79$ on the full text (versus $0.46$ on recognize-vs-evaluate), because the vent and solve prefixes differ
-in obvious vocabulary. The probe reads the surface-matched final token where that vocabulary is absent, but
-the surface-independence claim is weaker here than on the first axis. The value of this axis is showing the
-discard-and-recover behavior generalizes to a second intent, not a second demonstration of surface-independent
-representation.
-
-\begin{table*}[t]
-\centering\small
-\setlength{\tabcolsep}{14pt}
-\begin{tabular}{lcccc}
-\toprule
-model & probe & vent honored (default) [95\% CI] & steered [95\% CI] & default vs steered \\
-\midrule
-Qwen2.5-3B   & 1.00 & 0.70 [0.58, 0.82] & 0.98 [0.95, 1.00] & non-overlapping \\
-Llama-3.1-8B & 0.97 & 0.88 [0.80, 0.95] & 0.98 [0.95, 1.00] & ceiling \\
-\bottomrule
-\end{tabular}
-\caption{Second intent axis (vent vs solve), $n{=}60$ vent-intent items, bootstrap $95\%$ CI. \emph{Represents}
-holds on both (probe $1.00$/$0.97$); a bag-of-words baseline is elevated here ($0.79$) as the prefixes are
-lexically marked (see text). The discard-and-recovery is model-specific as on the first axis: non-overlapping
-on Qwen-3B, while Llama-8B already honors the vent intent at baseline (ceiling).}
-\label{tab:axis2}
-\end{table*}
+\paragraph{The chain is not specific to one intent contrast.} A second intent axis, \emph{vent} (``I just need
+to be heard'') versus \emph{solve} (``give me concrete steps''), replicates the whole chain with the same
+model-specificity: intent represented on both models (probe $1.00$/$0.97$), a clean non-overlapping
+discard-then-recovery on Qwen-3B ($0.70 \to 0.98$) and a ceiling on Llama-8B ($0.88$ baseline). Because the
+vent/solve prefixes are more lexically marked (bag-of-words $0.79$), this axis strengthens the
+behavioral generalization more than the surface-independence claim; full numbers in Appendix~\ref{app:axis2}.
 
 \section{Localizing the Discard}
 \label{sec:localize}
@@ -494,7 +489,7 @@ two models (Qwen2.5-3B and Llama-3.1-8B) we sweep every few layers and read, at 
 is (the probe) and how much steering \emph{at that layer} recovers honoring, the latter on the full $60$-item
 recognize set with bootstrap $95\%$ CIs; on Qwen-3B we also read where the reply opener commits, via a
 logit-lens of the last-token residual through the unembedding \citep{belrose2023tunedlens}
-(Figure~\ref{fig:localize}, Table~\ref{tab:localize}).
+(Table~\ref{tab:localize}; Figure~\ref{fig:localize} in the appendix).
 
 \paragraph{Represented before routed.} On both models the probe saturates at layers where steering does
 \emph{not} yet recover honoring. On Qwen-3B the intent is decodable by mid-network (probe $1.00$ at layer~24)
@@ -507,17 +502,6 @@ before it is routed into the readout, and the causal handle lives past the repre
 exactly the routing happens is model-specific, consistent with the model-specific steer layer of
 Section~\ref{sec:general}. The discard is a routing gap, not a failure to represent.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{localization.pdf}
-\caption{\textbf{Represented before routed.} Per layer, how decodable the intent is (blue, probe accuracy) and
-how much steering \emph{at that layer} recovers recognize-intent honoring (red, with bootstrap $95\%$ CIs),
-against the default baseline (dotted). On both models the probe saturates at layers where steering has not yet
-lifted honoring above baseline; recovery arrives only deeper (late and sharp for Qwen-3B, earlier and more
-diffuse for Llama-8B). The gap between the blue and red onsets is the discard: the intent is represented
-before it is routed into the readout. $n{=}60$.}
-\label{fig:localize}
-\end{figure*}
 
 \paragraph{Distributed, not a single head.} The window localizes in depth but not to an atomic component.
 Ablating each late-layer attention head in turn (query-side, one at a time) does not restore honoring: the
@@ -554,15 +538,14 @@ and more diffuse for Llama-8B.}
 
 \section{The Represented Direction Is a Handle, With No Prompt}
 \label{sec:prompt}
-If the intent is represented, one might simply \emph{tell} the model the intent in a system prompt. At $n{=}60$
-with bootstrap CIs (Table~\ref{tab:prompt}), an explicit prompt naming the intent does largely close the gap
-($0.93$), and steering the represented direction reaches $0.98$; the two intervals overlap, so we do
-\emph{not} claim routing recovers what prompting cannot. What the comparison shows is a property worth stating:
-the represented direction is a handle at least as good as the explicit instruction, obtained \emph{with no
-prompt at all}, and the two stack to full honoring ($1.00$). This matters wherever the prompt cannot be
-rewritten, inside an agent loop or behind a fixed API. And one practically memorable observation survives at
-power: a \emph{vague} nudge backfires. Telling the model to ``consider what this person is looking for''
-\emph{lowers} honoring from $0.65$ to $0.45$, it reads the instruction to attend as license to help.
+If the intent is represented, one might simply \emph{tell} the model in a system prompt. At $n{=}60$ with
+bootstrap CIs (Table~\ref{tab:prompt}), an explicit intent prompt largely closes the gap ($0.93$) and steering
+reaches $0.98$ with overlapping intervals, so we do \emph{not} claim routing beats prompting; the point is that
+the represented direction is a handle as good as the instruction with \emph{no prompt at all}, and the two
+stack to $1.00$, which matters wherever the prompt cannot be rewritten (an agent loop, a fixed API). One
+observation survives at power: a \emph{vague} nudge backfires. Telling the model to ``consider what this person
+is looking for'' \emph{lowers} honoring from $0.65$ to $0.45$; it reads the instruction to attend as license to
+help.
 
 \begin{table}[t]
 \centering\small
@@ -585,69 +568,56 @@ a handle as good as the instruction, with no prompt. A vague nudge backfires ($0
 
 \section{Naturalistic Transfer}
 \label{sec:natural}
-The stimuli so far are synthetic and surface-matched, which a reader may suspect drives the effect. We test
-whether the probe and the steering direction, both fit only on the templates, transfer to hand-written,
-non-templated messages (varied length, register, and topic; e.g.\ ``just got back from my first 5k, didn't
-stop once'' or ``six months sober today, wanted to tell someone''). The template-trained probe classifies the
-intent of these unseen natural messages at $1.00$ (layer~24). The behavioral chain reproduces on natural text:
-default honoring is $0.62$ (the same discard as the templates), steering with the template-derived direction
-recovers it to $1.00$ ($23/23$ coherent), and genuinely-evaluate natural messages correctly draw feedback
-($0.08$ honoring). The
-effect is not an artifact of the controlled stimuli; a direction learned on templates governs behavior on real
-messages.
+A reader may suspect the synthetic, surface-matched stimuli drive the effect. We test whether the probe and
+the steering direction, both fit only on templates, transfer to hand-written non-templated messages (varied
+length, register, and topic; e.g.\ ``just got back from my first 5k, didn't stop once''). The template-trained
+probe classifies their intent at $1.00$ (layer~24), and the behavioral chain reproduces: default honoring
+$0.62$ (the same discard), steering recovers it to $1.00$ ($23/23$ coherent), and genuinely-evaluate messages
+correctly draw feedback ($0.08$ honoring). A direction learned on templates governs behavior on real messages.
 
 \section{Limitations}
-We state these prominently because the result is easy to overread. \textbf{The discard is model-specific, and
+We state these prominently because the result is easy to overread. \textbf{The discard is model-specific;
 ``six models'' is not one claim.} The \emph{representation} generalizes across all six models and four families
-(probe $1.00$, $n{=}120$). The \emph{behavioral} discard-and-recovery, measured at $n{=}60$ with bootstrap CIs,
-holds cleanly (non-overlapping) on only three of the six (Qwen-3B, Qwen-7B, Llama-3.1-8B); the other three
-already honor recognize-intent at a high baseline (Qwen-14B $0.82$, Mistral $0.88$, Phi-3.5 $0.93$) and have
-little discard to recover (Section~\ref{sec:scale}). We report this stratification rather than let a single
-model count stand in for links of different strength. Two intent contrasts (recognize vs evaluate, and vent vs
-advise; Section~\ref{sec:axis2}), the second more lexically marked and clean on Qwen-3B but at ceiling on
-Llama-8B; deeper intents and further families and instruction-tuning regimes are untested.
-\textbf{Specificity rests on dissociation, not a p-value.} The steering effect is large and norm-matched
-random directions do not reproduce it, but the shuffled-label permutation has a fat tail on strong axes
-(Section~\ref{sec:spec}); we lean on the difference-of-means dissociation, not a significance threshold.
-\textbf{Alignment did not explain the discard.} We tested whether instruction tuning \emph{creates} the
-behavioral discard by comparing base and instruct checkpoints in a shared completion frame; under a strict
-critique metric both honor recognize-intent near ceiling, and an apparent base-versus-instruct gap under an
-earlier looser metric was a scoring artifact (friendly questions miscounted as feedback). We report no
-evidence that alignment installs the discard; the representation, however, is present in the base model
-(Section~\ref{sec:repr}). \textbf{Per-model steer layer.} The
-handle's layer is found by a per-model sweep; it is genuinely model-specific (Section~\ref{sec:general}), not
-a single cherry-picked layer, and we validate it out of sample, selecting layer and coefficient on a dev half
-of objects and confirming non-overlapping recovery on the held-out half (Section~\ref{sec:scale}).
-\textbf{Heuristic behavior measure.} Recognize-vs-evaluate behavior is scored by a feedback-offer lexicon,
-audited against generations, cross-checked against an independent sentence-embedding classifier, and validated
-against a human annotator who agrees with the lexicon at $\kappa{=}0.69$ and independently reproduces the
-steering effect (Section~\ref{sec:discard}); the effects are large enough that measurement noise cannot drive
-them, though a larger multi-annotator study would tighten the human agreement further. \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
+(probe $1.00$, $n{=}120$), but the \emph{behavioral} discard-and-recovery ($n{=}60$, bootstrap CIs) holds
+cleanly on only three (Qwen-3B, Qwen-7B, Llama-8B); the other three already honor at baseline (Qwen-14B $0.82$,
+Mistral $0.88$, Phi-3.5 $0.93$) with little to recover. Deeper intents, further families, and models above 32B
+are untested, so the across-model pattern is an observed stratification bounded at 32B, not a scaling law.
+\textbf{``Discard'' is operational, and one alternative reading is verbosity.} We call it a discard for its
+\emph{routability} (the intent is present and steerable), not as a normative verdict; feedback-offering may be
+a deliberate policy, and the stratification is equally consistent with capable models being less compulsively
+verbose (RLHF differences) than with a maturer readout, which six models cannot separate.
+\textbf{Specificity rests on dissociation, not a p-value.} Norm-matched random directions do not reproduce the
+effect, but the shuffled-label permutation has a fat tail on strong axes (Section~\ref{sec:spec}); we lean on
+the difference-of-means dissociation. \textbf{The opener-biasing alternative is refuted where steering is clean:}
+on Qwen-7B (orthogonal axes, full body reorientation) and Llama-8B (specific steering, inert opener direction);
+on Qwen-3B the effect dilutes over long generations, so its refutation rests on orthogonality alone
+(Section~\ref{sec:spec}).
+\textbf{Alignment did not explain the discard:} base and instruct checkpoints both honor near ceiling under a
+strict critique metric (an earlier base-vs-instruct gap was a scoring artifact), yet the representation is
+present in the base model (Section~\ref{sec:repr}). \textbf{Per-model steer layer:} found by a sweep, genuinely
+model-specific, validated out of sample (dev/test split by object, Section~\ref{sec:scale}). \textbf{Heuristic
+behavior measure:} a feedback-offer lexicon, cross-checked against an embedding classifier and a human (the
+author, blind to condition, $\kappa{=}0.69$); the effects are too large for measurement noise, and the intent
+labels need no annotation (they are fixed by construction). \textbf{Coherence ceiling.} Steering past coefficient $1.0$ degrades
 fluency, so the causal handle has a bounded operating range.
 
 \section{Discussion}
 The picture is a readout that lags a representation. The model represents the sender's communicative intent
-robustly, in depth, across phrasings, from pretraining, and even when the intent is unstated and must be
-inferred; what varies is whether the default readout acts on it. That readout lags the representation in two
-senses, in depth within a model (the intent is decodable several layers before it drives the output) and in
-capability across models (the behavioral failure is present in less capable models and absent in more capable
-ones that already act on it), and it closes toward the output layers and toward larger models. Where the gap
-is open, the represented direction is a causal handle, as good as an explicit instruction and available with
-no prompt; the naive difference-of-means direction is not, because at the representation's peak it is entangled
-with the discard, so the handle lives in the discriminative direction at a model-specific layer. This reframes
-a class of ``the model does not get it'' complaints: the model does get it, and often does infer the unstated
-part; whether it acts on it is the model-specific, capability-correlated question.
+robustly, from pretraining, and even when it is unstated and must be inferred; what varies is whether the
+default readout acts on it. The lag has two senses: within a model the intent is decodable several layers
+before it drives the output, and across models the failure is present in less capable models and absent in more
+capable ones (an observed stratification, not a scaling law). Where the gap is open the represented direction is
+a causal handle, as good as an explicit instruction with no prompt, while the naive difference-of-means
+direction is not, because at the representation's peak it is entangled with the discard. This reframes a class
+of ``the model does not get it'' complaints: it does get it, and often infers the unstated part; whether it
+acts on it is the model-specific question.
 
-\paragraph{What is and isn't new.} The steering technique is standard: adding a concept direction to the
-residual stream is by now a common tool \citep{turner2023actadd,li2023iti,rimsky2024caa,zou2023repe}, and
-representation engineering has used it to elicit or suppress model attributes. Our contribution is not the
-method but the \emph{object} and the \emph{decomposition}. We treat a sender's communicative intent as a
-first-class feature, show it is represented (including when unstated and only inferable, and distinct from the
-warmth it correlates with), and separate that from whether the readout acts on it. Recasting the gap as a
-readout that lags the representation, in depth and in capability, is what turns a vague ``the model doesn't get
-it'' complaint into a measured, localized phenomenon with a bounded behavioral footprint and a causal handle.
-The controls, and the nulls we report against ourselves (the alignment hypothesis, the single-head circuit,
-the inconclusive geometry), not a new steering trick, are the load-bearing part.
+\paragraph{What is and isn't new.} The steering technique is standard
+\citep{turner2023actadd,li2023iti,rimsky2024caa,zou2023repe}; our contribution is the \emph{object} and the
+\emph{decomposition}, not the method. We treat a sender's communicative intent as a first-class feature, show it
+is represented (including when unstated and inferable, and distinct from the warmth it correlates with), and
+separate that from whether the readout acts on it. The controls and the nulls we report against ourselves (the
+alignment hypothesis, the single-head circuit, the inconclusive geometry) are the load-bearing part.
 
 \section{Conclusion}
 Language models represent a sender's communicative intent, whether they want a thing recognized or evaluated,
@@ -656,26 +626,23 @@ at chance), from pretraining, across six models and four families, and even when
 must be inferred, where a valence control confirms the probe reads intent rather than the warmth it correlates
 with. Acting on that representation is the fragile part, and it lags in a patterned way: within a model the
 intent is decodable several layers before the readout uses it, and across models the behavioral failure is
-present in less capable models and absent in more capable ones, receding by 32B. Where the gap is open the
+present in less capable models and absent in more capable ones, an absence that holds through 32B. Where the gap is open the
 represented direction is a causal handle, recovering the honored behavior with a dose-response and matching an
 explicit instruction with no prompt at all. We have tried to make the object, not any single number, the
 contribution, and to report the nulls, the model-specificity, and the one inconclusive mechanism as plainly as
 the confirmations.
 
 \section*{Ethics Statement}
-This work is diagnostic interpretability on open-weight models. The stimuli are synthetic templates and
-hand-written example messages authored by the researcher; no real user data, personal data, or human subjects
-were involved, and the single behavioral annotation (Section~\ref{sec:discard}) was performed by the author on
-model-generated replies. Activation steering is an established technique and we introduce no new capability; the
-specific direction we study (honoring a sender's intent) is benign, but the same handle could in principle be
-used to suppress \emph{useful} critique or to induce sycophantic withholding, and we are explicit that our
-``honoring'' measure is a measure of routability, not a normative claim that a model should always withhold
-feedback (a warm reader may rightly offer a gentle note). We therefore do not recommend deploying intent-steering
-as a blanket ``suppress feedback'' intervention; the intended use of the finding is understanding where models
-represent communicative intent and building more faithful, honestly-evaluated readouts on top of it. All code,
-stimuli, and pre-registration are released to support scrutiny and replication.
+This is diagnostic interpretability on open-weight models. The stimuli are synthetic templates and hand-written
+examples authored by the researcher; no real user data or human subjects were involved, and the single
+behavioral annotation (Section~\ref{sec:discard}) was performed by the author. Activation steering is
+established and we introduce no new capability; the direction we study (honoring a sender's intent) is benign,
+but the same handle could suppress \emph{useful} critique or induce sycophantic withholding, so we are explicit
+that ``honoring'' measures routability, not a claim that a model should always withhold feedback (a warm reader
+may rightly offer a gentle note). We do not recommend intent-steering as a blanket ``suppress feedback''
+intervention; the intended use is understanding where models represent intent and building more faithful
+readouts on top of it. All code, stimuli, and pre-registration are released.
 
-\bibliographystyle{acl_natbib}
 \bibliography{references}
 
 \appendix
@@ -733,9 +700,31 @@ permutation is nonetheless a conservative control: on a very strong axis a permu
 with true intent (in an earlier run one of twelve shuffled directions tied the true separation on Qwen-7B), so
 we report the full distribution rather than select a favorable statistic.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{specificity.pdf}
+\caption{\textbf{The effect requires the learned direction.} Distribution of the behavior separation
+$S = \mathrm{feedback}(\text{toward-evaluate}) - \mathrm{feedback}(\text{toward-recognize})$ for $48$ random
+directions of matched norm (gray) and $12$ shuffled-label directions (blue), against the true intent direction
+(red line). On both models the true direction sits beyond the entire control distribution; no random or
+shuffled direction reaches it (permutation $p{=}0.02$).}
+\label{fig:specificity}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{localization.pdf}
+\caption{\textbf{Represented before routed.} Per layer, how decodable the intent is (blue, probe accuracy) and
+how much steering \emph{at that layer} recovers recognize-intent honoring (red, with bootstrap $95\%$ CIs),
+against the default baseline (dotted). On both models the probe saturates at layers where steering has not yet
+lifted honoring above baseline; recovery arrives only deeper (late and sharp for Qwen-3B, earlier and more
+diffuse for Llama-8B). The gap between the blue and red onsets is the discard. $n{=}60$.}
+\label{fig:localize}
+\end{figure}
+
 \section{Ceiling-model geometry (inconclusive)}
 \label{app:geometry}
-We asked whether the capability half of the trajectory (Section~\ref{sec:scale}) has a geometric signature: do
+We asked whether the across-model stratification (Section~\ref{sec:scale}) has a geometric signature: do
 the ceiling models, which honor recognize-intent by default, align their intent representation with the readout
 more than the discard models do? We pre-registered, before running, the metric $M = |\cos(\text{intent
 direction}, \text{readout direction})|$, where the intent direction is the final-layer logistic
@@ -747,8 +736,108 @@ the discard range, but Phi-3.5 is the lowest of all six ($0.00$), so there is no
 means differ ($0.15$ vs $0.08$) but the pre-registered separation criterion fails. A secondary operationalization
 (the direction separating honored from discarded default replies, computable only where both classes occur)
 gives $M \le 0.08$ throughout with no pattern. Per our pre-commitment we report the geometry as inconclusive and
-make no mechanism claim from it; the trajectory's capability half rests on the behavioral stratification and the
+make no mechanism claim from it; the across-model claim rests on the behavioral stratification and the
 depth localization alone.
+
+\section{Opener-biasing control (full numbers)}
+\label{app:opener}
+For the deflationary control of Section~\ref{sec:spec}, at each discard model's validated steer layer, matched
+activation norm, generating at a $100$-token budget (longer than the $45$-token specificity run so the reply has
+a body), we compare four quantities over the same $24$-item subset: $S_{\mathrm{true}}$, the behavior separation
+from steering the learned intent direction; $S_{\mathrm{opener}}$, from steering the
+acknowledgment-minus-feedback opener-unembedding direction directly; $S_{\mathrm{rest}}$, $S_{\mathrm{true}}$
+recomputed with each reply's first sentence removed; and $|\cos|$ between the intent and opener directions at
+that layer.
+
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+model & layer & $S_{\mathrm{true}}$ & $S_{\mathrm{opener}}$ (coherent) & $S_{\mathrm{rest}}$ & $|\cos|$ \\
+\midrule
+Qwen2.5-7B   & 16 & 14 & $-16$ (only $2/24$ coherent) & 14 & 0.001 \\
+Llama-3.1-8B & 19 &  7 & $1$ ($24/24$ coherent, inert) &  4 & 0.034 \\
+Qwen2.5-3B   & 30 &  4 & $-1$ (incoherent)            & $-2$ & 0.138 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+On Qwen-7B the opener direction at matched norm degrades coherence before it honors ($2/24$ coherent), and
+$S_{\mathrm{rest}}$ equals the full $S_{\mathrm{true}}$, so intent steering reorients the body, not the opener.
+On Llama-8B the longer budget lifts the true separation clear of the random ceiling ($S{=}7$ vs $\max|S|{=}3$)
+where the $45$-token run left it tied, the opener direction is inert ($S_{\mathrm{opener}}{=}1$), and
+$S_{\mathrm{rest}}{=}4$ shows a modest body effect. On Qwen-3B the true separation \emph{dilutes} at this budget
+($S{=}4$, below $\max|S|{=}12$): steered toward acknowledgment the small model acknowledges first but drifts
+back into feedback over a long reply (negative-side feedback rises from $3/24$ at $45$ tokens to $17/24$ at
+$100$), so the body test is inconclusive on 3B and its refutation rests on the norm-independent
+near-orthogonality ($|\cos|{=}0.14$) and the opener direction's incoherence. At the $45$-token budget of
+Section~\ref{sec:spec} the 3B separation is strong ($S_{\mathrm{true}}{=}14$), so the dilution is a
+generation-length effect, and the intervention on the smallest model is front-loaded. The load-bearing evidence
+against opener-biasing is the near-zero cosine on all three models and the body reorientation on Qwen-7B (and,
+more modestly, Llama-8B). Script: \texttt{experiments/modal\_opener\_control.py}.
+
+\section{Cross-model direction transport (exploratory)}
+\label{app:transport}
+The models do not share a hidden size, so a direction cannot transfer verbatim. We fit a linear map from
+Qwen-3B activations to Llama-8B activations on a train split of stimuli and transport Qwen's intent direction
+into Llama's space. The transported direction lands at cosine $0.85$ to Llama's \emph{own} intent direction,
+and steering Llama with it recovers honoring ($0.56 \to 1.00$ on held-out items). We keep this out of the main
+text and flag it as exploratory: the map's held-out activation $R^2$ is negative (it aligns the intent
+direction, it does not reconstruct activation space), and a random direction of matched norm gives partial
+non-specific recovery ($0.69$), so the signal is the direction alignment, not the raw steering number. Read as
+suggestive that the intent axis is shared up to a linear map, not as an isomorphism claim.
+
+\section{Request-matched construct control (full numbers)}
+\label{app:request}
+For the construct-validity control of Section~\ref{sec:repr}, both intent classes carry an explicit directive
+so that request-presence is held constant and only the content of the request differs; recognize prefixes
+become requests for acknowledgment (``please just celebrate this with me, I really don't want any notes''; ``do
+me a favor and just take it in, don't give me feedback''; eight in all), paired with the unchanged evaluate
+directives and the same surface-matched suffix. Probe accuracy is leave-one-phrasing-out CV at three depths;
+the bag-of-words baseline uses the same phrasing folds.
+
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+model & probe ($0.5$ / $0.67$ / $0.83$ depth) & peak & bag-of-words \\
+\midrule
+Qwen2.5-3B   & 0.912 / 0.898 / 0.973 & 0.973 & 0.688 \\
+Qwen2.5-7B   & 0.929 / 0.891 / 0.955 & 0.955 & 0.688 \\
+Llama-3.1-8B & 0.950 / 0.968 / 0.943 & 0.968 & 0.688 \\
+Phi-3.5-mini & 1.000 / 0.984 / 0.953 & 1.000 & 0.688 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The probe clears the bag-of-words baseline by roughly $0.25$--$0.30$ on every model with request-presence
+matched. The baseline is higher than the surface-matched set's $0.48$ because celebration-requests and
+critique-requests use different content words; that residual lexical signal is exactly what the surface-matched
+design (Table~\ref{tab:probe}) controls, and the two designs together rule out both confounds. Script:
+\texttt{experiments/modal\_request\_matched.py}.
+
+\section{Second intent axis: vent vs solve (full numbers)}
+\label{app:axis2}
+To test that the represents-discard-recover chain is not specific to the recognize-versus-evaluate contrast, we
+replicate it on a different intent: \emph{vent} (``I'm not looking for advice, I just need to be heard'') versus
+\emph{solve} (``give me concrete steps to fix this''), behavior scored by whether the reply offers a solution,
+surface-matched stimuli built as before on Qwen2.5-3B and Llama-3.1-8B. Intent decodes at probe $1.00$ (Qwen-3B)
+and $0.97$ (Llama-8B) at the surface-matched token. At $n{=}60$ with bootstrap CIs, Qwen-3B honors the vent
+intent only $0.70$ by default and steering recovers it to $0.98$ (non-overlapping); Llama-8B already honors it
+at $0.88$ baseline (ceiling), so steering only nudges it to $0.98$. The representation holds on both; the clean
+discard-then-recovery is on the model that discards. This axis is more lexically marked than the first: a
+bag-of-words classifier reaches $0.79$ on the full text (versus $0.46$ on recognize-vs-evaluate), so it does
+more to show the behavior generalizes to a second intent than to re-establish surface-independent
+representation.
+
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+model & probe & vent honored (default) [95\% CI] & steered [95\% CI] & default vs steered \\
+\midrule
+Qwen2.5-3B   & 1.00 & 0.70 [0.58, 0.82] & 0.98 [0.95, 1.00] & non-overlapping \\
+Llama-3.1-8B & 0.97 & 0.88 [0.80, 0.95] & 0.98 [0.95, 1.00] & ceiling \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \section{Reproducibility}
 \label{app:repro}

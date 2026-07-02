@@ -22,6 +22,7 @@ sweep_*.json
 
 # modal run logs
 *_run.log
+*_long.log
 
 # empty rating template (regenerable); keep the filled + key
 ratings_blind.csv

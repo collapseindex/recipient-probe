@@ -1,0 +1,47 @@
+=== Deflationary control: is late-layer steering just opener-token biasing? (reviewer concern #1) ===
+Script: experiments/modal_opener_control.py  |  Output: sweep_opener_control.json  |  n=24 (12/side)
+
+The objection: steering the intent direction at a late layer may not "route a discarded intent," it may just bias
+the opener-token distribution toward acknowledgment openers (near logit-steering). If so, (a) the intent direction
+should align with the (ACK-opener - FB-opener) unembedding direction, (b) steering that opener direction directly
+should reproduce the recovery, and (c) the effect should live only in the first token.
+
+Per model, at its validated ladder steer layer, matched norm, same hook as modal_specificity2.py:
+  S_true      = feedback(+intent) - feedback(-intent)                     [does intent steering control honoring]
+  S_opener    = feedback(+opener) - feedback(-opener)                     [does the opener direction reproduce it]
+  S_true_rest = S_true scored on the reply with its FIRST SENTENCE REMOVED [body reorientation vs opening move]
+  cos_L       = |cos(intent_dir, opener_dir)| at the steer layer          [are the two axes the same direction]
+
+TWO budgets were run. The specificity section (modal_specificity2.py) uses MAXTOK=45. This control was RE-RUN at
+MAXTOK=100 so the first-sentence-removed body test has a body to score (at 45 tokens most replies are one sentence).
+
+  --- MAXTOK=100 (the reported run; body test valid) ---
+  model         layer  S_true  S_opener (coh)      S_true_rest  cos_L   rand_maxabs
+  Qwen2.5-7B    16     14      -16 (2/24 coh)      14           0.001   11
+  Llama-3.1-8B  19      7        1 (24/24 coh)      4           0.034    3
+  Qwen2.5-3B    30      4       -1 (0-4/24 coh)    -2           0.138   12
+
+  --- MAXTOK=45 (first run, for reference; matches specificity S_true 14/16/8) ---
+  Qwen2.5-3B 14 | Qwen2.5-7B 16 | Llama-3.1-8B 8
+
+READING (mixed, reported straight):
+- Qwen-7B = CLEAN REFUTATION, strengthened at 100 tokens. cos=0.001 (intent axis orthogonal to the opener axis).
+  S_true_rest=14 EQUALS the full-reply S_true=14: with the first sentence removed, intent steering swings feedback
+  just as much, so it reorients the whole response body, not the opening move. Direct opener-direction steering
+  cannot reproduce it (breaks coherence at matched norm, 2/24 coherent on the ack side).
+- Llama-8B = NOW SUPPORTS (was inconclusive at 45 tokens, where S_true=8 tied rand_maxabs=8). At 100 tokens
+  S_true=7 clears rand_maxabs=3, so steering is specific; S_true_rest=4 shows a modest body effect; the opener
+  direction is inert (S_opener=1, no separation). Opener-biasing refuted here too.
+- Qwen-3B = BODY TEST INCONCLUSIVE, and an honest new finding: at 100 tokens the intent-steering separation
+  DILUTES to S_true=4, below rand_maxabs=12. Steered toward acknowledgment, the small model acknowledges first
+  but drifts back into feedback over a long reply (neg side feedback 3/24 at 45 tokens -> 17/24 at 100). So the
+  steering effect on the smallest model is FRONT-LOADED and washes out over ~100 tokens. The opener-biasing
+  refutation on 3B therefore rests on the norm-independent facts: near-orthogonality (cos=0.138) and the opener
+  direction's incoherence under steering, NOT on S_rest.
+
+BOTTOM LINE: opener-biasing is refuted on the two models where steering is clean at this budget (Qwen-7B strongly,
+Llama-8B on the specificity/orthogonality/inert-opener triad); on Qwen-3B the body test is inconclusive because
+the intervention is front-loaded and dilutes over a long generation, and the refutation there rests on
+orthogonality + opener incoherence. Caveat on the control: S_opener reuses the intent direction's activation norm,
+which over-drives the opener axis and costs coherence; the load-bearing evidence is the norm-independent cosine
+(all three) plus the 7B body reorientation, not the opener-steer coherence collapse.

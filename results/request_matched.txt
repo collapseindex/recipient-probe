@@ -1,0 +1,32 @@
+=== Construct-validity control: intent, or just request-detection? (reviewer point 1) ===
+Script: experiments/modal_request_matched.py  |  Output: sweep_request_matched.json  |  n=120, leave-phrasing-out CV
+
+The objection: in the surface-matched stated-intent stimuli, EVALUATE prefixes carry an explicit directive
+("be blunt...") and RECOGNIZE prefixes carry none, so the probe might decode "is a directive present" rather
+than the sender's intent. Fix: hold request-presence CONSTANT -- every recognize prefix now also carries an
+explicit request (celebrate-with-me / don't-critique), matched to the evaluate side (critique-this). Only the
+CONTENT of the request differs. Same surface-matched suffix. If the probe still decodes at ceiling, it reads
+what is requested (intent), not whether something is requested.
+
+  model         probe acc (0.5 / 0.67 / 0.83 depth)   peak    BoW (leave-phrasing-out)
+  Qwen2.5-3B    0.912 / 0.898 / 0.973                 0.973   0.688
+  Qwen2.5-7B    0.929 / 0.891 / 0.955                 0.955   0.688
+  Llama-3.1-8B  0.950 / 0.968 / 0.943                 0.968   0.688
+  Phi-3.5-mini  1.000 / 0.984 / 0.953                 1.000   0.688
+
+READING:
+- Probe decodes recognize-vs-evaluate at 0.90-1.00 even with request-presence matched. Request-detection is
+  REFUTED: the signal is the content of the request (the intent), not the presence of a directive.
+- BoW rose from 0.48 (surface-matched original) to 0.69 here, because request-matched recognize phrasings carry
+  celebration lexicon ("celebrate", "happy", "proud", "enjoy") absent from the evaluate side -- unavoidable when
+  you match request-presence. But the probe clears BoW by ~0.25-0.30 on every model, so lexical cues do not
+  account for it.
+
+COMPLEMENTARY-CONTROLS FRAMING (the strong form):
+- Surface-matched (original): identical suffix -> BoW at chance 0.48 (controls LEXICAL leakage); recognize lacks
+  a directive (request-presence confound present).
+- Request-matched (this run): both classes carry directives (controls REQUEST-PRESENCE); BoW rises to 0.69
+  (more lexical leakage).
+- The probe hits ceiling in BOTH. Design 1 kills the lexical explanation; design 2 kills the request-detection
+  explanation; the only thing constant across both designs is that the probe reads intent. Neither single
+  confound survives.
