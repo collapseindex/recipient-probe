@@ -307,6 +307,19 @@ sampling across three seeds gives default honoring $0.53$--$0.60$ and steered $0
 evaluate-intent items draw feedback at $0.63$--$0.80$ by default; a model that withholds feedback on
 recognize-intent does so because the intent tells it to, not because it never critiques.
 
+\paragraph{Capability-correlated, and the same shape as depth.} The split tracks capability, not raw size. The
+discard cases are the smaller, less instruction-mature models ($\le 8$B) and the ceiling cases the more capable
+ones ($\ge 14$B), with one telling exception: Mistral-7B sits at ceiling while the larger Qwen-14B only barely
+clears it, so we read the pattern as \emph{capability-correlated, not scale-caused}. Pushing further up, Qwen-32B
+represents the intent (probe $0.99$ stated, $0.93$ inferred) yet honors it at baseline ($0.78$ and $0.77$): the
+discard keeps receding. This is the same shape as the depth result of Section~\ref{sec:localize}, where the
+intent is represented several layers before the readout uses it. The readout lags the representation, in depth
+within a model and in capability across models, and closes toward the output layers and toward more capable
+models. We looked for a geometric signature of the closing, whether the intent direction aligns with the
+readout more in ceiling models, but the pre-registered test was inconclusive (Appendix~\ref{app:geometry}); we
+make no mechanism claim from it, and the trajectory rests on the behavioral stratification here together with
+the depth localization.
+
 \paragraph{The steer layer is not cherry-picked: held-out selection.} A steering result invites the worry that
 the layer and coefficient were tuned on the same items where the effect is then measured. We rule this out with
 a nested split \emph{by object}: the steering direction is fit, and the layer and coefficient selected, on a
