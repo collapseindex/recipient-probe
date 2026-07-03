@@ -7,22 +7,24 @@ data/
 build/
 dist/
 .pytest_cache/
-# LaTeX build artifacts (track .tex source, not outputs)
-paper/*.aux
-paper/*.bbl
-paper/*.blg
-paper/*.log
-paper/*.out
-paper/*.pdf
-paper/*.fdb_latexmk
-paper/*.fls
-paper/*.synctex.gz
 
+# paper lives on arXiv, not in the repo
+paper/
+*.tar.gz
+ARXIV_ABSTRACT.txt
+
+# raw sweep outputs (regenerable)
 sweep_*.json
+data/sweeps/
+data/logs/
 
-# modal run logs
-*_run.log
-*_long.log
+# run logs
+*.log
 
-# empty rating template (regenerable); keep the filled + key
+# human annotation: raw per-rater data kept private (annotators are anonymous);
+# aggregate result lives in results/human_validation.txt
+annotation/
 ratings_blind.csv
+ratings_blind_filled.csv
+ratings_key.csv
+ANNOTATE.md

@@ -1,4 +1,4 @@
-"""DEFLATIONARY CONTROL for the readout-lag claim (addresses the reviewer's central objection).
+"""Deflationary control for the readout-lag claim: is late-layer steering just opener-token biasing?
 
 The concern: late-layer steering with the intent direction might not be "routing a discarded intent," it might
 just be biasing the opener-token distribution toward acknowledgment openers (near logit-steering). If so, then
@@ -8,7 +8,7 @@ intent effect would live only in the first token.
 This runs three things per discard model, at its VALIDATED ladder steer layer, same hook and matched norm as
 modal_specificity2.py, so it is apples-to-apples with the headline steering result:
   (1) S_true   = feedback(+intent) - feedback(-intent)                  -- the learned intent direction.
-  (2) S_opener = feedback(+opener) - feedback(-opener), opener_dir =     -- Fable's direct control: steer the
+  (2) S_opener = feedback(+opener) - feedback(-opener), opener_dir =     -- direct control: steer the
         unit(mean unembed(ACK openers) - mean unembed(FB openers)),         opener-unembedding direction itself.
         matched to the same activation norm.
   (3) S_true_rest = the intent-direction separation computed on the reply with its FIRST SENTENCE REMOVED
@@ -184,7 +184,7 @@ def run(model_name: str):
     # (3) intent direction, scored on the body (first sentence removed)
     S_true_rest, det_rest = sep(w_true, on_rest=True)
 
-    # (2) opener-unembedding direction (Fable's direct deflationary control)
+    # (2) opener-unembedding direction (direct deflationary control)
     def opener_ids(words):
         ids = []
         for wd in words:

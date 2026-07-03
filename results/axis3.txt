@@ -1,0 +1,38 @@
+=== Third intent axis: support (vent) vs help (solve), inferred + BoW-clean, FULL chain ===
+Gate: experiments/modal_axis3_gate.py -> sweep_axis3_gate.json (probe+BoW only)
+Full: experiments/modal_axis3_full.py -> sweep_axis3_full.json (probe+BoW+discard+recover, 6 models)
+
+A third intent axis with a CLEAN (low-BoW) design, so the represent-then-lag
+phenomenon is not all one contrast (recognize/evaluate) or riding a lexical crutch (the old vent/solve axis was
+BoW 0.79). Intent set by an INFERRED context frame (support = reflective/connecting; help = task/decision),
+over a neutral surface-matched core; frames lexically diverse within each class so leave-one-frame-out defeats BoW.
+
+  model         probe  BoW   honor_default[95%CI]  honor_steered[95%CI]  recover   help_sol  sup_sol
+  Qwen2.5-3B    0.74   0.57  0.68 [0.53,0.82]      0.97 [0.92,1.00]      NON-ovlp  0.50      0.32
+  Qwen2.5-7B    0.71   0.57  0.72 [0.60,0.85]      0.85 [0.72,0.95]      overlap   0.40      0.28
+  Qwen2.5-14B   0.86   0.57  0.68 [0.53,0.82]      0.93 [0.82,1.00]      overlap   0.42      0.32
+  Mistral-7B    0.80   0.57  0.78 [0.65,0.90]      0.90 [0.80,0.97]      overlap   0.47      0.22
+  Phi-3.5       0.82   0.57  0.53 [0.38,0.68]      1.00 [1.00,1.00]      NON-ovlp  0.57      0.47
+  Llama-3.1-8B  0.82   0.57  0.90 [0.80,0.97]      1.00 [1.00,1.00]      NON-ovlp  0.15      0.10
+  (n_support = 40/model, MAXTOK=45, steer at the primary-axis per-model layer, no re-sweep)
+
+READING:
+- REPRESENTS (headline, airtight): probe 0.71-0.86 vs BoW 0.57 on all six models / four families. A genuinely
+  different, fully-inferred, BoW-clean intent is represented everywhere. The representation generalizes across
+  intents, not just across models, and not via lexical shortcut.
+- DISCARD (modest, on-thesis): help-intent draws solutions more than support-intent in EVERY model (help_sol >
+  sup_sol, gaps 0.05-0.25), so intent modulates behavior; but the models solutionize weakly on either (this
+  intent is fully inferred, no stated request), so the behavioral separation is smaller than the primary axis.
+- STEER/RECOVER: steering toward support DOES lift honoring to 0.85-1.00, BUT it FAILS the specificity control
+  (modal_axis3_spec.py, sweep_axis3_spec.json): random matched-norm directions move solutionizing AS MUCH as the
+  learned direction. S_true=6 (Qwen-3B), 11 (Phi-3.5) vs random max|S|=19, 16; p_rand=0.31, 0.14 (NOT sig);
+  shuffled max=11,11, p_shuf=0.46,0.15. So the axis3 behavioral "recovery" is NOT specific to the intent
+  direction -- it is a generic large-perturbation effect on a weak, low-rate behavior. We do NOT claim a causal
+  handle on this axis. (The primary axis PASSED specificity at p=0.02; this one does not.)
+
+BOTTOM LINE (revised after the spec control): the third axis establishes that the REPRESENTATION generalizes to a
+clean, genuinely different intent (probe 0.71-0.86 vs BoW 0.57, all six) -- the strong claim, airtight. The
+BEHAVIORAL chain is weak: the readout tracks the intent only faintly (help>support solutions by 0.05-0.25) and
+steering the direction is NOT a specific handle (fails random-null). Scope the contribution to the representation,
+report the steering as a null. This is the expected shape (represented strongly, acted on too weakly to steer
+specifically) and it goes on record as another null-against-ourselves.

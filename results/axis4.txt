@@ -1,0 +1,31 @@
+AXIS 4 (vent vs advise) - fourth intent axis, full-chain attempt
+================================================================
+Goal: a fourth axis completing the full chain (surface-clean + strong discard + steering
+passing specificity), which would earn the general "communicative intent" claim.
+
+RESULT: does NOT complete the chain. Two legs fail.
+
+1. Surface-clean?  NO. Bag-of-words = 0.787, flat across all 6 models (probe 0.86-1.00).
+   A vent/advise contrast is constitutively lexically marked (cannot ask to vent without
+   venting words), like vent/solve. So it cannot earn the surface-independence leg.
+
+2. Strong discard?  YES on 5/6 (default vent-honoring 0.15-0.53, advise-solution 0.88-0.95);
+   Llama-8B is the exception (honors vent 0.93 by default, barely solutionizes, advise 0.675).
+
+3. Steering recovers?  5/6 lift +0.38..+0.82; Llama reverses -0.18 (already at honoring ceiling).
+
+4. Steering passes specificity control (modal_axis4_spec.py, leaner: N_RAND=24, ITEMS=8)?
+   SPLIT:
+     Qwen-3B    S_true=13 > random|max|=9,  shuf_max=9  -> PASS (p_rand=0.04)
+     Phi-3.5    S_true=8  < random|max|=11, shuf_max=16 -> FAIL (p_rand=0.32)
+
+VERDICT: lexically marked (not surface-clean) AND specificity passes on only 1/2 models.
+Stronger than axis3/support-help (which failed specificity on BOTH), but not a clean second
+causal handle. The scoped abstract stays. Recommendation: keep OUT of the
+paper (the recognize/evaluate chain + honest axis3 null already carry the generalization claim);
+record here.
+
+Discard partition is intent-specific (not a fixed model trait): on the primary axis Llama-8B is
+the strongest discarder (0.57->0.85) but here it is the only non-discarder; Qwen-7B/14B/Mistral/
+Phi are ceiling on the primary axis but discard here. Only Qwen-3B discards on both. This supports
+"readout, not disposition" and is already reflected in the paper's model-specific framing.

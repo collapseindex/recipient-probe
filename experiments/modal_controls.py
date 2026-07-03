@@ -1,4 +1,4 @@
-"""Reviewer-proofing controls for the recipient-probe paper.
+"""Specificity and invariance controls for the recipient-probe steering result.
 
 (1) SPECIFICITY  -- defends "the steering handle is the *intent* direction, not a generic
     feedback/verbosity knob you relabeled." A permutation test on the steering effect itself:

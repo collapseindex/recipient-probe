@@ -1,0 +1,19 @@
+RECOGNIZE-STEER ON EVALUATE ITEMS (intent-routing vs feedback-suppression control)
+==================================================================
+Does the recovery route intent, or generically suppress feedback? Apply the SAME recognize-steer
+vector (main-recovery construction, -1*an*u at the model steer layer) to evaluate-intent items,
+where critique is explicitly requested ("be blunt..."), and measure whether it survives.
+
+model        recog honoring def->steer   eval feedback def->steer   req. feedback retained
+Qwen-3B      0.65 -> 0.983               0.767 -> 0.067             9%
+Qwen-7B      0.60 -> 0.949               0.800 -> 0.117             15%
+Llama-8B     0.567 -> 0.850              0.683 -> 0.417             61%
+
+READING (honest, mixed): requested feedback is reduced on all three, by a MODEL-SPECIFIC amount.
+On Llama-8B a genuine PARTIAL dissociation - honoring recovers while 61% of requested feedback
+survives (intent-router-like). On the two Qwen models requested feedback largely collapses (9-15%),
+so there the recovery is not behaviorally separable from generic feedback-suppression at the
+recovery coefficient. Direction-specificity (vs random) still holds (Section spec); what this shows
+is that the BEHAVIORAL effect is not confined to UNSOLICITED feedback. Scope the causal claim to a
+handle on feedback-offering behavior, model-specifically selective, not a clean request-respecting
+intent-router. Quantifies how much requested feedback survives.

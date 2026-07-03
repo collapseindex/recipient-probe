@@ -1,4 +1,4 @@
-=== Deflationary control: is late-layer steering just opener-token biasing? (reviewer concern #1) ===
+=== Deflationary control: is late-layer steering just opener-token biasing? ===
 Script: experiments/modal_opener_control.py  |  Output: sweep_opener_control.json  |  n=24 (12/side)
 
 The objection: steering the intent direction at a late layer may not "route a discarded intent," it may just bias

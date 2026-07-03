@@ -5,7 +5,7 @@ run_circuit: per-head ablation. We depth-localized the discard to the late layer
     RAISES honoring while coherence holds are the components writing the discard. An early layer (12) is included
     as a specificity control (ablating heads there should not restore honoring).
 
-run_metric: the paper scores behavior with a feedback-offer lexicon; a reviewer will call it a heuristic. We
+run_metric: behavior is scored with a feedback-offer lexicon (a heuristic); we cross-check it. We
     re-score default vs steered recognize replies with an INDEPENDENT, judge-free measure: a sentence-embedding
     classifier (cosine to hand-written feedback vs acknowledgment prototypes). If both the lexicon and the
     embedding measure show steering raises honoring, and they agree per-reply, the effect is not a lexicon artifact.

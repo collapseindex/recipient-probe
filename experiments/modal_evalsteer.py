@@ -1,25 +1,28 @@
-"""Scale the behavioral evidence: discard + recover at full n, with variance, across models.
+"""Control: dissociate intent-routing from generic feedback-suppression.
 
-Puts the discard and recovery on firmer statistical footing (full n, variance, models). For each of four models at
-its ladder steer layer, we measure recognize-intent honoring on the FULL 60-item recognize set under default
-vs steering-toward-recognize, returning per-item honoring so bootstrap 95% CIs can be put on the rates. For
-Qwen-3B we also run K=3 sampled-decoding seeds (temperature 0.7) to show the effect is not a greedy artifact.
+Concern: recognize-steering might recover honoring simply by suppressing feedback-adjacent tokens generically,
+in which case it would also kill feedback that was EXPLICITLY requested. We test the dissociation directly with
+the SAME recognize-steer vector used for the main recovery (fit on the last-token logistic direction at the
+model's steer layer, added as -1*an*u, identical to modal_scale.py), applied to both classes:
 
-  PYTHONIOENCODING=utf-8 PYTHONUTF8=1 modal run experiments/modal_scale.py
+  recognize items:  honoring default -> steered   (should RISE: unsolicited feedback removed)
+  evaluate  items:  feedback default -> steered   (should SURVIVE: requested critique preserved)
+
+A steer that raises recognize-honoring while leaving evaluate-feedback intact is intent-routing, not a generic
+"stop giving feedback" knob. Run on the three models where the recovery is clean (Table 3, non-overlapping).
+
+  PYTHONIOENCODING=utf-8 PYTHONUTF8=1 modal run experiments/modal_evalsteer.py
 """
 import modal
 
-app = modal.App("recipient-probe-scale")
+app = modal.App("recipient-probe-evalsteer")
 image = (modal.Image.debian_slim(python_version="3.11")
-         .pip_install("torch", "transformers==5.12.1", "accelerate", "scikit-learn", "numpy",
-                      "sentencepiece", "sentence-transformers"))
+         .pip_install("torch", "transformers==5.12.1", "accelerate", "scikit-learn", "numpy", "sentencepiece"))
 cache = modal.Volume.from_name("hf-cache", create_if_missing=True)
 
+# The three models with a real discard and non-overlapping recovery (paper Table 3), at their steer layers.
 MODEL_LAYER = {"Qwen/Qwen2.5-3B-Instruct": 30, "Qwen/Qwen2.5-7B-Instruct": 16,
-               "Qwen/Qwen2.5-14B-Instruct": 41, "mistralai/Mistral-7B-Instruct-v0.3": 22,
-               "microsoft/Phi-3.5-mini-instruct": 22, "NousResearch/Meta-Llama-3.1-8B-Instruct": 19}
-SAMPLED_MODEL = "Qwen/Qwen2.5-3B-Instruct"
-SEEDS = [0, 1, 2]
+               "NousResearch/Meta-Llama-3.1-8B-Instruct": 19}
 MAXTOK = 40
 
 R_PHRASES = [
@@ -75,18 +78,6 @@ FEEDBACK = [
     "refine", "polish", "make sure", "one thing",
     "stronger", "?",
 ]
-# Generic acknowledgment openers for the embedding measure's ACK centroid. These are obvious, universal
-# acknowledgments, not tuned to the feedback lexicon; the FEEDBACK centroid is data-derived at run time from
-# the model's own evaluate-intent replies (the class that decides honoring), so the measure does not depend on
-# author-written feedback prototypes.
-ACK_PROTO = [
-    "Congratulations, that's a real accomplishment.",
-    "That's wonderful, I'm so happy for you.",
-    "Wow, what a great thing to have finished.",
-    "Amazing work, you should be proud of this.",
-    "That's beautiful, thank you for sharing it with me.",
-    "How exciting, well done on getting it done.",
-]
 
 
 def build_stimuli():
@@ -138,78 +129,50 @@ def run_model(model_name: str):
             hs = model(**enc(text), output_hidden_states=True).hidden_states
         acts.append(hs[L][0, -1, :].float().cpu().numpy())
     acts = np.array(acts)
+    # identical construction to modal_scale.py: steer TOWARD recognize (label 0) at -1*an*u
     w = LogisticRegression(C=1.0, max_iter=3000).fit(acts, y).coef_[0]
     u = w / (np.linalg.norm(w) + 1e-8)
     an = float(np.linalg.norm(acts, axis=1).mean())
     steer_rec = torch.tensor(-1.0 * an * u, dtype=torch.bfloat16, device="cuda")
 
-    def gen(text, sample=False, seed=0):
+    def gen(text):
         e = enc(text)
-        if sample:
-            torch.manual_seed(seed)
         with torch.no_grad():
-            o = model.generate(**e, max_new_tokens=MAXTOK, do_sample=sample,
-                               temperature=(0.7 if sample else None), top_p=(0.9 if sample else None),
-                               pad_token_id=tok.eos_token_id)
+            o = model.generate(**e, max_new_tokens=MAXTOK, do_sample=False, pad_token_id=tok.eos_token_id)
         return tok.decode(o[0][e["input_ids"].shape[1]:], skip_special_tokens=True)
 
-    rec = [t for t, lab, _ in stim if lab == 0]      # full 60 recognize items
-    ev = [t for t, lab, _ in stim if lab == 1]        # 60 evaluate items = data-derived feedback anchor
+    rec = [t for t, lab, _ in stim if lab == 0]
+    ev = [t for t, lab, _ in stim if lab == 1]
 
-    # Generate reply TEXT once so both measures score the SAME saved replies (reproducible, judge-free).
-    def gen_all(vec, sample=False, seed=0):
+    def gen_all(items, vec):
         sv["v"] = vec
-        reps = [gen(text, sample=sample, seed=seed) for text in rec]
+        reps = [gen(t) for t in items]
         sv["v"] = None
         return reps
 
-    default_reps = gen_all(None)
-    steered_reps = gen_all(steer_rec)
-    sv["v"] = None
-    eval_reps = [gen(t) for t in ev]                  # evaluate-intent replies (natural feedback)
+    # recognize items: honoring = not offering feedback (1 honored, 0 feedback, -1 incoherent)
+    rec_def = gen_all(rec, None); rec_ste = gen_all(rec, steer_rec)
+    # evaluate items: feedback offered = 1 (the requested critique), 0 = withheld, -1 incoherent
+    ev_def = gen_all(ev, None); ev_ste = gen_all(ev, steer_rec)
 
-    def lex_labels(reps):                             # 1 = honored, 0 = feedback, -1 = incoherent (dropped)
+    def honor(reps):   # recognize honoring
         return [(-1 if not coherent(r) else int(not has_any(r, FEEDBACK))) for r in reps]
 
-    # --- data-derived embedding measure (independent of the lexicon and of hand-written feedback prototypes) ---
-    from sentence_transformers import SentenceTransformer
-    emb = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", device="cuda")
-    coh_eval = [r for r in eval_reps if coherent(r)] or eval_reps
-    fb_c = emb.encode(coh_eval, normalize_embeddings=True).mean(0)     # feedback centroid = model's own critiques
-    ack_c = emb.encode(ACK_PROTO, normalize_embeddings=True).mean(0)   # ack centroid = generic acknowledgments
+    def fb(reps):      # evaluate feedback presence
+        return [(-1 if not coherent(r) else int(has_any(r, FEEDBACK))) for r in reps]
 
-    def emb_labels(reps):
-        out = []
-        for r in reps:
-            if not coherent(r):
-                out.append(-1); continue
-            e = emb.encode([r], normalize_embeddings=True)[0]
-            out.append(int(float(e @ fb_c) <= float(e @ ack_c)))       # honored = closer to ack than feedback
-        return out
+    def rate(labs):
+        v = [x for x in labs if x >= 0]
+        return round(sum(v) / max(len(v), 1), 3)
 
-    lex_def, lex_ste = lex_labels(default_reps), lex_labels(steered_reps)
-    emb_def, emb_ste = emb_labels(default_reps), emb_labels(steered_reps)
-
-    def agree(a, b):
-        both = [(x, y) for x, y in zip(a, b) if x != -1 and y != -1]
-        return [round(sum(x == y for x, y in both) / max(len(both), 1), 3), len(both)]
-
-    eval_fb = [int(has_any(r, FEEDBACK)) for r in eval_reps if coherent(r)]
-
-    result = {"model": model_name, "layer": L, "n_rec": len(rec),
-              "greedy_default": lex_def, "greedy_steered": lex_ste,          # lexicon labels (key unchanged)
-              "emb_default": emb_def, "emb_steered": emb_ste,                # data-derived embedding labels
-              "agree_default": agree(lex_def, emb_def), "agree_steered": agree(lex_ste, emb_ste),
-              "eval_fb_rate": round(sum(eval_fb) / max(len(eval_fb), 1), 3),
-              "reps_default": default_reps, "reps_steered": steered_reps}    # saved replies for free re-score
-
-    if model_name == SAMPLED_MODEL:
-        sampled = {"default": [], "steered": []}
-        for s in SEEDS:
-            sampled["default"].append(lex_labels(gen_all(None, sample=True, seed=s)))
-            sampled["steered"].append(lex_labels(gen_all(steer_rec, sample=True, seed=s)))
-        result["sampled"] = sampled
-    return result
+    rh_def, rh_ste = honor(rec_def), honor(rec_ste)
+    ef_def, ef_ste = fb(ev_def), fb(ev_ste)
+    return {"model": model_name, "layer": L, "n_per_class": len(rec),
+            "rec_honor_default": rh_def, "rec_honor_steered": rh_ste,
+            "eval_fb_default": ef_def, "eval_fb_steered": ef_ste,
+            "rec_honor_default_rate": rate(rh_def), "rec_honor_steered_rate": rate(rh_ste),
+            "eval_fb_default_rate": rate(ef_def), "eval_fb_steered_rate": rate(ef_ste),
+            "reps_eval_steered": ev_ste}   # saved for a spot-check that critique survives verbatim
 
 
 @app.local_entrypoint()
@@ -221,8 +184,7 @@ def main():
             out.append(run_model.remote(m))
         except Exception:
             out.append({"model": m, "ERROR": traceback.format_exc()})
-    path = "sweep_scale.json"
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(out, f, indent=1)
-    print(f"WROTE {path}")
-    print("=== SCALE finished ===")
+        with open("sweep_evalsteer.json", "w", encoding="utf-8") as f:
+            json.dump(out, f, indent=1)
+        print(f"WROTE sweep_evalsteer.json ({len(out)}/{len(MODEL_LAYER)} models)")
+    print("=== EVALSTEER finished ===")

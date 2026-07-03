@@ -1,4 +1,4 @@
-=== Construct-validity control: intent, or just request-detection? (reviewer point 1) ===
+=== Construct-validity control: intent, or just request-detection? ===
 Script: experiments/modal_request_matched.py  |  Output: sweep_request_matched.json  |  n=120, leave-phrasing-out CV
 
 The objection: in the surface-matched stated-intent stimuli, EVALUATE prefixes carry an explicit directive

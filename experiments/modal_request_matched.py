@@ -1,4 +1,4 @@
-"""CONSTRUCT-VALIDITY control: intent, or just request-detection? (reviewer point 1)
+"""Construct-validity control: intent, or just request-detection?
 
 The objection: in the stated-intent stimuli the EVALUATE prefixes carry an explicit directive ("be blunt...")
 while the RECOGNIZE prefixes carry none, so the probe might decode "is a directive speech act present" rather

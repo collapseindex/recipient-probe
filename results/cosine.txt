@@ -1,0 +1,19 @@
+COSINE VALIDATOR (deflationary test): is the intent direction just the feedback-behavior axis?
+=====================================================================================================
+At each discard model's steer layer, fit w_intent = logistic(last-token acts, INTENT labels) [= probe/steer
+direction] and w_behavior = logistic(same acts, BEHAVIOR labels = did the DEFAULT reply offer feedback?),
+report cos(w_intent, w_behavior). Forward-pass-only, no long generation.
+
+model      cos(intent,behavior)   random cos mean/max   intent-vs-behavior label disagreement
+Qwen-3B    0.13                    0.017 / 0.088         0.292
+Qwen-7B    0.087                   0.012 / 0.046         0.300
+Llama-8B   0.102                   0.013 / 0.047         0.375
+
+VERDICT: near-orthogonal (~0.1, just above the random floor). The intent-probe/steer direction is NOT the
+feedback-offering behavior axis. The deflationary reading ("the handle is a generic feedback-suppression knob
+correlated with intent by construction") is REFUTED. The fork: cos~0.95 -> deflationary; cos~0.3 -> routing.
+We got ~0.1, past routing. Reconciles with evalsteer (steering recognize suppresses REQUESTED feedback on Qwen):
+steering changes the represented INTENT, which the model routes into behavior forcefully enough to override the
+surface request -> intent-routing, and a powerful one, not a feedback knob. The ~30-37% label disagreement (the
+discard events) is what allows the two axes to be orthogonal. => last-round hedges were overcautious; replace
+with the positive control.
