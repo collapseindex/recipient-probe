@@ -3,7 +3,7 @@
 **Language models represent a sender's communicative intent in their hidden states more reliably than they act on it.**
 
 Code, stimuli, and results for the paper *"They Infer What You Meant: Models Represent Communicative Intent More
-Reliably Than They Act On It."* (arXiv link forthcoming.)
+Reliably Than They Act On It."* ([arXiv:2607.03598](https://arxiv.org/abs/2607.03598))
 
 When you share something with a language model, it often answers the *surface* of your message rather than what
 you were *doing* by sending it: share a finished project and it critiques the code; share a raw late-night line
@@ -75,11 +75,14 @@ PREREG.md                              pre-registration
 
 ```bibtex
 @misc{kwon2026recipientprobe,
-  title  = {They Infer What You Meant: Models Represent Communicative Intent
-            More Reliably Than They Act On It},
-  author = {Kwon, Alex},
-  year   = {2026},
-  note   = {arXiv preprint (identifier forthcoming)}
+  title         = {They Infer What You Meant: Models Represent Communicative Intent
+                   More Reliably Than They Act On It},
+  author        = {Kwon, Alex},
+  year          = {2026},
+  eprint        = {2607.03598},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  note          = {arXiv:2607.03598}
 }
 ```
 
