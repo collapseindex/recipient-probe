@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite the paper below."
+title: "They Infer What You Meant: Models Represent Communicative Intent More Reliably Than They Act On It"
+authors:
+  - family-names: Kwon
+    given-names: Alex
+    orcid: "https://orcid.org/0009-0002-2566-5538"
+    website: "https://collapseindex.org"
+date-released: 2026-07-03
+url: "https://arxiv.org/abs/2607.03598"
+repository-code: "https://github.com/collapseindex/recipient-probe"
+keywords:
+  - mechanistic interpretability
+  - activation probing
+  - communicative intent
+  - representation-action gap
+  - AI safety
+preferred-citation:
+  type: article
+  title: "They Infer What You Meant: Models Represent Communicative Intent More Reliably Than They Act On It"
+  authors:
+    - family-names: Kwon
+      given-names: Alex
+      orcid: "https://orcid.org/0009-0002-2566-5538"
+  year: 2026
+  month: 7
+  journal: "arXiv preprint arXiv:2607.03598"
+  url: "https://arxiv.org/abs/2607.03598"
